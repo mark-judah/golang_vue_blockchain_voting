@@ -43,12 +43,13 @@ func main() {
 		fmt.Println("nodeID", val)
 	}
 
-	setRaftState("leader")
+	setRaftState("follower")
 	setRaftTerm(0)
+	setVoteAndTerm("0", "0", "0")
 
 	mqtt.DEBUG = log.New(os.Stdout, "", 0)
 	mqtt.ERROR = log.New(os.Stdout, "", 0)
-	opts := mqtt.NewClientOptions().AddBroker("tcp://broker.emqx.io:1883")
+	opts := mqtt.NewClientOptions().AddBroker("tcp://127.0.0.1:1883")
 
 	// interval to ping whether connectons to broker is still alive
 	opts.SetKeepAlive(60 * time.Second)
@@ -67,19 +68,6 @@ func main() {
 		panic(token.Error())
 	}
 
-	//subcribe to a topic
-	//token.Wait, Wait() is a bool that show when a action is completed
-
-	if token := client.Subscribe("leaderNodePulse/#", 0, nil); token.Wait() && token.Error() != nil {
-		fmt.Println(token.Error())
-		os.Exit(1)
-	}
-
-	if token := client.Subscribe("election/#", 0, nil); token.Wait() && token.Error() != nil {
-		fmt.Println(token.Error())
-		os.Exit(1)
-	}
-
 	for {
 		leaderAlive = false
 
@@ -93,7 +81,7 @@ func main() {
 			leaderAliveCounter = leaderAliveCounter + 1
 		}
 		if leaderAliveCounter >= 10 && val == "follower" {
-			fmt.Printf("Leader Dead")
+			fmt.Println("Leader Dead")
 			requestVotes(client)
 
 		}
@@ -132,6 +120,172 @@ func main() {
 
 }
 
+var connectHandler mqtt.OnConnectHandler = func(client mqtt.Client) {
+	fmt.Println("Connected")
+	//subcribe to a topic
+	//token.Wait, Wait() is a bool that show when a action is completed
+
+	//place subscriptions here
+	//on connection loss, the client resubscribes when the connection is restored
+	if token := client.Subscribe("leaderNodePulse/#", 0, nil); token.Wait() && token.Error() != nil {
+		fmt.Println(token.Error())
+		os.Exit(1)
+	}
+
+	if token := client.Subscribe("election/#", 0, nil); token.Wait() && token.Error() != nil {
+		fmt.Println(token.Error())
+		os.Exit(1)
+	}
+
+	if token := client.Subscribe("nodeElectionResponse/#", 0, nil); token.Wait() && token.Error() != nil {
+		fmt.Println(token.Error())
+		os.Exit(1)
+	}
+}
+
+var connectLostHandler mqtt.ConnectionLostHandler = func(client mqtt.Client, err error) {
+	fmt.Printf("Connect to broker lost: %v", err)
+}
+var receiveMsgs mqtt.MessageHandler = func(client mqtt.Client, message mqtt.Message) {
+	var dataArray []string
+	err := json.Unmarshal(message.Payload(), &dataArray)
+	if err != nil {
+		log.Println("Error unmarshalling:", err)
+		return
+	}
+	fmt.Println("NEW UNMARSHALLED MESSAGE: " + dataArray[0] + " " + dataArray[1] + " ")
+
+	fmt.Printf("TOPIC: %s\n", message.Topic())
+	fmt.Printf("MESSAGE: %s\n", string(message.Payload()))
+
+	if dataArray[1] == "Leader Alive" {
+		print("##################################")
+		if getClientState() != "leader" {
+			setRaftState("follower")
+		}
+		time.Sleep(time.Duration(time.Second))
+		leaderAlive = true
+		leaderAliveCounter = 0
+	}
+
+	if string(message.Topic()) == "election/1" {
+		fmt.Println("Node:" + clientID.String() + " casting vote")
+		intVal, err2 := strconv.Atoi(dataArray[1])
+		if err2 != nil {
+			panic(err2)
+		}
+
+		if getClientTerm() > intVal {
+			fmt.Println("Node has a greater term than candidate")
+			setRaftState("candidate")
+			candidateNodeId := dataArray[0]
+			var voterPayload []string
+			voterPayload = append(voterPayload, clientID.String(), candidateNodeId, strconv.Itoa(intVal), "higher term")
+			jsonData, err2 := json.Marshal(voterPayload)
+			if err2 != nil {
+				panic(err2)
+			}
+			token := client.Publish("nodeElectionResponse/1", 0, false, jsonData)
+			token.Wait()
+		}
+
+		//check if the node has already voted in this election term
+
+		if getClientVote()[1] != dataArray[1] {
+			fmt.Println("Node has not voted in this term" + " stored candidate: " + getClientVote()[0] + " election term " + dataArray[1])
+
+			if getClientState() == "candidate" {
+				println("Node voting for itself")
+				var voterPayload []string
+				voterPayload = append(voterPayload, clientID.String(), clientID.String(), strconv.Itoa(intVal), "yes")
+				jsonData, err2 := json.Marshal(voterPayload)
+				if err2 != nil {
+					panic(err2)
+				}
+				token := client.Publish("nodeElectionResponse/1", 0, false, jsonData)
+				token.Wait()
+
+				setVoteAndTerm(clientID.String(), voterPayload[2], "yes")
+			} else {
+				println("Node voting for another node")
+				candidateNodeId := dataArray[0]
+				var voterPayload []string
+				voterPayload = append(voterPayload, clientID.String(), candidateNodeId, strconv.Itoa(intVal), "yes")
+				jsonData, err2 := json.Marshal(voterPayload)
+				if err2 != nil {
+					panic(err2)
+				}
+				token := client.Publish("nodeElectionResponse/1", 0, false, jsonData)
+				token.Wait()
+
+				setVoteAndTerm(candidateNodeId, voterPayload[2], "yes")
+			}
+		} else {
+			fmt.Println("Node has already voted in this term" + " stored candidate: " + getClientVote()[0] + " election term" + dataArray[1])
+		}
+
+	}
+
+	if string(message.Topic()) == "nodeElectionResponse/1" {
+		fmt.Println("Node:" + clientID.String() + "vote response")
+
+		if clientID.String() == dataArray[1] {
+			if dataArray[3] == "higher term" {
+				setRaftState("follower")
+			}
+		}
+
+		//store each vote as it arrives
+		//count total number of votes
+		//announce leader
+		//revert all other nodes to
+	}
+
+}
+
+var requestVotes = func(client mqtt.Client) {
+	fmt.Println("########################" + "Voting Started")
+	randomNumber := rand.Intn(10)
+	fmt.Println("########################" + "Waited for" + strconv.Itoa(randomNumber))
+	time.Sleep(time.Duration(time.Duration(randomNumber).Seconds()))
+	setRaftState("candidate")
+
+	key := clientID.String() + "term"
+	term, err := redisClient.Get(ctx, key).Result()
+	if err != nil {
+		panic(err)
+	}
+
+	newTerm, err2 := strconv.Atoi(term)
+	if err != nil {
+		panic(err2)
+	}
+	newTerm = newTerm + 1
+	setRaftTerm(newTerm)
+
+	var candidatePayload []string
+	candidatePayload = append(candidatePayload, clientID.String(), strconv.Itoa(newTerm))
+	jsonData, err2 := json.Marshal(candidatePayload)
+	if err2 != nil {
+		panic(err2)
+	}
+	token := client.Publish("election/1", 0, false, jsonData)
+	token.Wait()
+}
+
+func getClientTerm() int {
+	key := clientID.String() + "term"
+	val, err := redisClient.Get(ctx, key).Result()
+	if err != nil {
+		panic(err)
+	}
+	intVal, err2 := strconv.Atoi(val)
+	if err2 != nil {
+		panic(err2)
+	}
+	return intVal
+}
+
 func getClientState() string {
 	key := clientID.String() + "state"
 	val, err := redisClient.Get(ctx, key).Result()
@@ -139,6 +293,21 @@ func getClientState() string {
 		panic(err)
 	}
 	return val
+}
+
+func getClientVote() []string {
+	key := clientID.String() + "votePayload"
+	val, err := redisClient.Get(ctx, key).Result()
+	if err != nil {
+		panic(err)
+	}
+	var dataArray []string
+	err = json.Unmarshal([]byte(val), &dataArray)
+	if err != nil {
+		log.Println("Error unmarshalling:", err)
+	}
+
+	return dataArray
 }
 
 func setRaftTerm(term int) {
@@ -169,61 +338,23 @@ func setRaftState(state string) {
 	}
 }
 
-var connectHandler mqtt.OnConnectHandler = func(client mqtt.Client) {
-	fmt.Println("Connected")
-}
-
-var connectLostHandler mqtt.ConnectionLostHandler = func(client mqtt.Client, err error) {
-	fmt.Printf("Connect lost: %v", err)
-}
-var receiveMsgs mqtt.MessageHandler = func(client mqtt.Client, message mqtt.Message) {
-	var dataArray []string
-	err := json.Unmarshal(message.Payload(), &dataArray)
-	if err != nil {
-		log.Println("Error unmarshalling:", err)
-		return
-	}
-
-	fmt.Printf("TOPIC: %s\n", message.Topic())
-	fmt.Printf("MESSAGE: %s\n", string(message.Payload()))
-
-	if dataArray[1] == "Leader Alive" {
-		print("##################################")
-		if getClientState() != "leader" {
-			setRaftState("follower")
-		}
-		time.Sleep(time.Duration(time.Second))
-		leaderAlive = true
-		leaderAliveCounter = 0
-	}
-
-	if string(message.Topic()) == "election" {
-		fmt.Printf("Election")
-
-	}
-}
-
-var requestVotes = func(client mqtt.Client) {
-	fmt.Println("Voting Started")
-	randomNumber := rand.Intn(100)
-	time.Sleep(time.Duration(time.Duration(randomNumber).Microseconds()))
-	setRaftState("candidate")
-
-	key := clientID.String() + "term"
-	term, err := redisClient.Get(ctx, key).Result()
-	if err != nil {
-		panic(err)
-	}
-
-	newTerm, err2 := strconv.Atoi(term)
-	if err != nil {
+func setVoteAndTerm(candidateNodeId string, term string, vote string) {
+	fmt.Println("Storing Vote: " + "candidateNodeId: " + candidateNodeId + " term: " + term + " vote: " + vote)
+	var votePayload []string
+	votePayload = append(votePayload, candidateNodeId, term, vote)
+	jsonData, err2 := json.Marshal(votePayload)
+	if err2 != nil {
 		panic(err2)
 	}
-	newTerm = newTerm + 1
-	setRaftTerm(newTerm)
 
-	var candidatePayload []string
-	candidatePayload = append(candidatePayload, clientID.String(), strconv.Itoa(newTerm))
-	token := client.Publish("election/1", 0, false, candidatePayload)
-	token.Wait()
+	err := redisClient.Set(ctx, clientID.String()+"votePayload", jsonData, 0).Err()
+	if err != nil {
+		panic(err)
+	} else {
+		val, err := redisClient.Get(ctx, clientID.String()+"votePayload").Result()
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println("Stored vote", val)
+	}
 }
