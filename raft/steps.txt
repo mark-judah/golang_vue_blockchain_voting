@@ -1,3 +1,4 @@
+-dockerize to simulate different computers
 -on first_start or on_start_after_crash set node_state = follower
 -leader node sends i'm alive pulse every few seconds
 -if follower nodes don't receive the leaders pulse, after a randomized timeout, a follower node can request to be voted for  

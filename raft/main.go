@@ -15,7 +15,6 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-var clientID = uuid.New()
 var leaderAlive = false
 var leaderAliveCounter = 0
 
@@ -31,11 +30,11 @@ var ctx = context.Background()
 
 func main() {
 
-	err := redisClient.Set(ctx, clientID.String()+"nodeID", clientID.String(), 0).Err()
+	err := redisClient.Set(ctx, getClientID()+"nodeID", getClientID(), 0).Err()
 	if err != nil {
 		panic(err)
 	} else {
-		key := clientID.String() + "nodeID"
+		key := getClientID() + "nodeID"
 		val, err := redisClient.Get(ctx, key).Result()
 		if err != nil {
 			panic(err)
@@ -43,7 +42,7 @@ func main() {
 		fmt.Println("nodeID", val)
 	}
 
-	setRaftState("follower")
+	setRaftState("leader")
 	setRaftTerm(0)
 	setVoteAndTerm("0", "0", "0")
 
@@ -71,7 +70,7 @@ func main() {
 	for {
 		leaderAlive = false
 
-		key := clientID.String() + "state"
+		key := getClientID() + "state"
 		val, err := redisClient.Get(ctx, key).Result()
 		if err != nil {
 			panic(err)
@@ -87,7 +86,7 @@ func main() {
 		}
 
 		if val == "leader" {
-			key := clientID.String() + "term"
+			key := getClientID() + "term"
 			val, err := redisClient.Get(ctx, key).Result()
 			if err != nil {
 				panic(err)
@@ -116,6 +115,7 @@ func main() {
 		fmt.Print(leaderAlive)
 		fmt.Print(leaderAliveCounter)
 		fmt.Print(getClientState())
+		getTotalNodes()
 	}
 
 }
@@ -169,7 +169,7 @@ var receiveMsgs mqtt.MessageHandler = func(client mqtt.Client, message mqtt.Mess
 	}
 
 	if string(message.Topic()) == "election/1" {
-		fmt.Println("Node:" + clientID.String() + " casting vote")
+		fmt.Println("Node:" + getClientID() + " casting vote")
 		intVal, err2 := strconv.Atoi(dataArray[1])
 		if err2 != nil {
 			panic(err2)
@@ -180,7 +180,7 @@ var receiveMsgs mqtt.MessageHandler = func(client mqtt.Client, message mqtt.Mess
 			setRaftState("candidate")
 			candidateNodeId := dataArray[0]
 			var voterPayload []string
-			voterPayload = append(voterPayload, clientID.String(), candidateNodeId, strconv.Itoa(intVal), "higher term")
+			voterPayload = append(voterPayload, getClientID(), candidateNodeId, strconv.Itoa(intVal), "higher term")
 			jsonData, err2 := json.Marshal(voterPayload)
 			if err2 != nil {
 				panic(err2)
@@ -197,7 +197,7 @@ var receiveMsgs mqtt.MessageHandler = func(client mqtt.Client, message mqtt.Mess
 			if getClientState() == "candidate" {
 				println("Node voting for itself")
 				var voterPayload []string
-				voterPayload = append(voterPayload, clientID.String(), clientID.String(), strconv.Itoa(intVal), "yes")
+				voterPayload = append(voterPayload, getClientID(), getClientID(), strconv.Itoa(intVal), "yes")
 				jsonData, err2 := json.Marshal(voterPayload)
 				if err2 != nil {
 					panic(err2)
@@ -205,12 +205,12 @@ var receiveMsgs mqtt.MessageHandler = func(client mqtt.Client, message mqtt.Mess
 				token := client.Publish("nodeElectionResponse/1", 0, false, jsonData)
 				token.Wait()
 
-				setVoteAndTerm(clientID.String(), voterPayload[2], "yes")
+				setVoteAndTerm(getClientID(), voterPayload[2], "yes")
 			} else {
 				println("Node voting for another node")
 				candidateNodeId := dataArray[0]
 				var voterPayload []string
-				voterPayload = append(voterPayload, clientID.String(), candidateNodeId, strconv.Itoa(intVal), "yes")
+				voterPayload = append(voterPayload, getClientID(), candidateNodeId, strconv.Itoa(intVal), "yes")
 				jsonData, err2 := json.Marshal(voterPayload)
 				if err2 != nil {
 					panic(err2)
@@ -227,18 +227,26 @@ var receiveMsgs mqtt.MessageHandler = func(client mqtt.Client, message mqtt.Mess
 	}
 
 	if string(message.Topic()) == "nodeElectionResponse/1" {
-		fmt.Println("Node:" + clientID.String() + "vote response")
+		fmt.Println("Node:" + getClientID() + "vote response")
 
-		if clientID.String() == dataArray[1] {
+		if getClientID() == dataArray[1] {
 			if dataArray[3] == "higher term" {
 				setRaftState("follower")
 			}
 		}
 
 		//store each vote as it arrives
-		//count total number of votes
+		votesMap := map[string]string{}
+		votesMap[dataArray[0]] = dataArray[2]
+
+		// //count total number of votes
+		// if(len(votesMap)==3){
+		// 	for candidate,vote:=range votesMap{
+
+		// 	}
+		// }
 		//announce leader
-		//revert all other nodes to
+		//revert all other nodes to followers
 	}
 
 }
@@ -250,7 +258,7 @@ var requestVotes = func(client mqtt.Client) {
 	time.Sleep(time.Duration(time.Duration(randomNumber).Seconds()))
 	setRaftState("candidate")
 
-	key := clientID.String() + "term"
+	key := getClientID() + "term"
 	term, err := redisClient.Get(ctx, key).Result()
 	if err != nil {
 		panic(err)
@@ -264,7 +272,7 @@ var requestVotes = func(client mqtt.Client) {
 	setRaftTerm(newTerm)
 
 	var candidatePayload []string
-	candidatePayload = append(candidatePayload, clientID.String(), strconv.Itoa(newTerm))
+	candidatePayload = append(candidatePayload, getClientID(), strconv.Itoa(newTerm))
 	jsonData, err2 := json.Marshal(candidatePayload)
 	if err2 != nil {
 		panic(err2)
@@ -274,7 +282,7 @@ var requestVotes = func(client mqtt.Client) {
 }
 
 func getClientTerm() int {
-	key := clientID.String() + "term"
+	key := getClientID() + "term"
 	val, err := redisClient.Get(ctx, key).Result()
 	if err != nil {
 		panic(err)
@@ -287,7 +295,7 @@ func getClientTerm() int {
 }
 
 func getClientState() string {
-	key := clientID.String() + "state"
+	key := getClientID() + "state"
 	val, err := redisClient.Get(ctx, key).Result()
 	if err != nil {
 		panic(err)
@@ -296,7 +304,7 @@ func getClientState() string {
 }
 
 func getClientVote() []string {
-	key := clientID.String() + "votePayload"
+	key := getClientID() + "votePayload"
 	val, err := redisClient.Get(ctx, key).Result()
 	if err != nil {
 		panic(err)
@@ -310,12 +318,38 @@ func getClientVote() []string {
 	return dataArray
 }
 
+func getTotalNodes() {
+
+}
+
+func getClientID() string {
+	if _, err := os.Stat("clientId"); err == nil {
+		fmt.Printf("File exists\n")
+
+		clientId, err := os.ReadFile("clientId")
+		if err != nil {
+			panic(err)
+		}
+		return string(clientId)
+	} else {
+		fmt.Printf("File does not exist\n")
+
+		clientId := []byte(uuid.New().String())
+		err := os.WriteFile("clientId", clientId, 0644)
+		if err != nil {
+			panic(err)
+		}
+		return string(clientId)
+	}
+
+}
+
 func setRaftTerm(term int) {
-	err := redisClient.Set(ctx, clientID.String()+"term", term, 0).Err()
+	err := redisClient.Set(ctx, getClientID()+"term", term, 0).Err()
 	if err != nil {
 		panic(err)
 	} else {
-		key := clientID.String() + "term"
+		key := getClientID() + "term"
 		val, err := redisClient.Get(ctx, key).Result()
 		if err != nil {
 			panic(err)
@@ -325,11 +359,11 @@ func setRaftTerm(term int) {
 }
 
 func setRaftState(state string) {
-	err := redisClient.Set(ctx, clientID.String()+"state", state, 0).Err()
+	err := redisClient.Set(ctx, getClientID()+"state", state, 0).Err()
 	if err != nil {
 		panic(err)
 	} else {
-		key := clientID.String() + "state"
+		key := getClientID() + "state"
 		val, err := redisClient.Get(ctx, key).Result()
 		if err != nil {
 			panic(err)
@@ -347,11 +381,11 @@ func setVoteAndTerm(candidateNodeId string, term string, vote string) {
 		panic(err2)
 	}
 
-	err := redisClient.Set(ctx, clientID.String()+"votePayload", jsonData, 0).Err()
+	err := redisClient.Set(ctx, getClientID()+"votePayload", jsonData, 0).Err()
 	if err != nil {
 		panic(err)
 	} else {
-		val, err := redisClient.Get(ctx, clientID.String()+"votePayload").Result()
+		val, err := redisClient.Get(ctx, getClientID()+"votePayload").Result()
 		if err != nil {
 			panic(err)
 		}
