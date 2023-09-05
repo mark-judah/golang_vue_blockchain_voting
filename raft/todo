@@ -1,0 +1,4 @@
+-dockerize to simulate different computers -->done
+
+-store the raft term in a file to make it persistent
+-fix delay, follower nodes take too long to realize that the leader is dead

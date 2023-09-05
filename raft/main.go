@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"math/rand"
+	"net/http"
 	"os"
 	"strconv"
 	"time"
@@ -18,6 +20,7 @@ import (
 var leaderAlive = false
 var leaderAliveCounter = 0
 var leaderPayload []string
+var myVotes []string
 
 var redisClient = redis.NewClient(&redis.Options{
 	Addr:     "localhost:6379",
@@ -109,7 +112,6 @@ func main() {
 
 		fmt.Println("\n My id----->" + readClientID())
 
-		getTotalNodes()
 	}
 
 }
@@ -225,20 +227,17 @@ var receiveMsgs mqtt.MessageHandler = func(client mqtt.Client, message mqtt.Mess
 			if dataArray[3] == "higher term" {
 				setRaftState("follower")
 			}
+
+			if len(myVotes) < getTotalConnectedNodes() {
+				myVotes = append(myVotes, dataArray[1])
+			}
+
+			if len(myVotes) == getTotalConnectedNodes() {
+				setRaftState("leader")
+			}
+
 		}
 
-		//store each vote as it arrives
-		votesMap := map[string]string{}
-		votesMap[dataArray[0]] = dataArray[2]
-
-		// //count total number of votes
-		// if(len(votesMap)==3){
-		// 	for candidate,vote:=range votesMap{
-
-		// 	}
-		// }
-		//announce leader
-		//revert all other nodes to followers
 	}
 
 }
@@ -310,8 +309,32 @@ func getClientVote() []string {
 	return dataArray
 }
 
-func getTotalNodes() {
+func getTotalConnectedNodes() int {
+	username := "920ed6b2165341ff"
+	password := "YXVq6EHQTA5dNyLcvvFiuQO6KfJT33wegV9B8MR4fz3C"
 
+	url := "http://localhost:18083/api/v5/nodes/emqx%40127.0.0.1/stats"
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		panic(err)
+	}
+	req.SetBasicAuth(username, password)
+	req.Header.Set("Content-Type", "application/json")
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		panic(err)
+	}
+	body, _ := io.ReadAll(resp.Body)
+	var data map[string]int
+	err = json.Unmarshal([]byte(body), &data)
+	if err != nil {
+		log.Println("\n Error unmarshalling:", err)
+	}
+	live_connections := data["live_connections.count"]
+	fmt.Println("Total live connections: " + strconv.Itoa(live_connections))
+
+	return live_connections
 }
 
 func readClientID() string {
