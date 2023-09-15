@@ -1,0 +1,16 @@
+-on first_start or on_start_after_crash set node_state = follower
+-leader node sends i'm alive pulse every few seconds
+-if follower nodes don't receive the leaders pulse, after a randomized timeout(150ms to 300ms), a follower node can request to be voted for  
+-each election cyle has a term
+-if a candidate node discovers that durring an election, or when a leader pulse is received, another node has a higher term, it immediaetly reverts to a follower
+-if a candidate node fails to get a response during an election, after a given timeout,it restarts the election with a higher term number
+
+
+
+
+
+
+
+
+
+https://www.kaleido.io/blockchain-blog/consensus-algorithms-poa-ibft-or-raft
