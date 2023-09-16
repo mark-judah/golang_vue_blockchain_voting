@@ -1,7 +1,0 @@
-version: '3'
- 
-services:
-  raft-service-node4:
-    network_mode: host
-    build: .
-    

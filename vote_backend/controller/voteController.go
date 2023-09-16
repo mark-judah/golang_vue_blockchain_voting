@@ -4,30 +4,23 @@ import (
 	"fmt"
 	"net/http"
 	"vote_backend/models"
+	"vote_backend/utils"
 
 	"github.com/gin-gonic/gin"
 )
 
 // the mempool uses a queue datastructure
-type Queue struct {
-	transactions []models.Vote
-}
+var TransactionPool = utils.Queue{}
 
 func NewVote(context *gin.Context) {
-	fmt.Println("...............New vote", &context.Request.Body)
+	fmt.Println("...............New vote", context.Request.Body)
 
 	newVote := models.Vote{}
 	if err := context.BindJSON(&newVote); err != nil {
 		return
 	}
 	//store vote in transaction pool
-	transactionPool := Queue{}
+	TransactionPool.Enqueue(newVote)
 
-	transactionPool.Enqueue(newVote)
-	//inform other nodes
 	context.IndentedJSON(http.StatusCreated, newVote)
-}
-
-func (q *Queue) Enqueue(newVote models.Vote) {
-	q.transactions = append(q.transactions, newVote)
 }

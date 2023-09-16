@@ -14,6 +14,7 @@ import (
 	"syscall"
 	"time"
 	"vote_backend/controller"
+	"vote_backend/utils"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/gin-gonic/gin"
@@ -98,11 +99,20 @@ func main() {
 			token := client.Publish("leaderNodePulse/"+key, 0, false, jsonData)
 			token.Wait()
 
+			//check transaction pool
+			println("Transaction pool: " + fmt.Sprintf("%+v", controller.TransactionPool.Transactions))
+			transactionData, err3 := json.Marshal(controller.TransactionPool)
+			if err3 != nil {
+				panic(err3)
+			}
+			token2 := client.Publish("transactionPool/1", 0, false, transactionData)
+			token2.Wait()
 		}
 
 		if val == "candidate" {
 			//set to zero to avoid requestVotes being called infinitely
 			leaderAliveCounter = 0
+			go killGinServer()
 
 		}
 
@@ -110,6 +120,7 @@ func main() {
 			fmt.Println("\n Leader Alive--------------------->" + strconv.FormatBool(leaderAlive))
 			fmt.Println("\n Leader Alive Counter--------------------->" + strconv.Itoa(leaderAliveCounter))
 			fmt.Println(getClientState())
+			go killGinServer()
 		}
 
 		time.Sleep(time.Duration(time.Second))
@@ -141,33 +152,45 @@ var connectHandler mqtt.OnConnectHandler = func(client mqtt.Client) {
 		fmt.Println(token.Error())
 		os.Exit(1)
 	}
+
+	if token := client.Subscribe("transactionPool/#", 0, nil); token.Wait() && token.Error() != nil {
+		fmt.Println(token.Error())
+		os.Exit(1)
+	}
 }
 
 var connectLostHandler mqtt.ConnectionLostHandler = func(client mqtt.Client, err error) {
-	fmt.Printf("Connect to broker lost: %v", err)
+	fmt.Printf("Connection to broker lost: %v", err)
+
 }
 var receiveMsgs mqtt.MessageHandler = func(client mqtt.Client, message mqtt.Message) {
 	var dataArray []string
+	var transactionPool utils.Queue
 	err := json.Unmarshal(message.Payload(), &dataArray)
 	if err != nil {
-		log.Println("Error unmarshalling:", err)
-		return
-	}
-	fmt.Printf("TOPIC: %s\n", message.Topic())
-	fmt.Printf("MESSAGE: %s\n", string(message.Payload()))
-
-	if dataArray[1] == "Leader Alive" {
-		println("-------------------->Leader Alive")
-		if getClientState() != "leader" {
-			setRaftState("follower")
+		err := json.Unmarshal(message.Payload(), &transactionPool)
+		println("Transaction pool message: " + fmt.Sprintf("%+v", transactionPool.Transactions))
+		if err != nil {
+			log.Println("Error unmarshalling as string or as Queue:", err)
 		}
-		time.Sleep(time.Duration(time.Second))
-		leaderAlive = true
-		leaderAliveCounter = 0
+
+	}
+	fmt.Printf("TOPIC------> %s\n", message.Topic())
+	fmt.Printf("MESSAGE------> %s\n", string(message.Payload()))
+
+	if len(dataArray) > 0 {
+		if dataArray[1] == "Leader Alive" {
+			println("-------------------->Leader Alive")
+			if getClientState() != "leader" {
+				setRaftState("follower")
+			}
+			time.Sleep(time.Duration(time.Second))
+			leaderAlive = true
+			leaderAliveCounter = 0
+		}
 	}
 
 	if string(message.Topic()) == "election/1" {
-		killGinServer()
 		fmt.Println("Node:" + readClientID() + " casting vote")
 		intVal, err2 := strconv.Atoi(dataArray[1])
 		if err2 != nil {
@@ -239,13 +262,18 @@ var receiveMsgs mqtt.MessageHandler = func(client mqtt.Client, message mqtt.Mess
 
 			if len(myVotes) == getTotalConnectedNodes() {
 				setRaftState("leader")
-				startGinServer()
+				go startGinServer()
 			}
 
 		}
 
 	}
 
+	if string(message.Topic()) == "transactionPool/1" {
+		fmt.Println("\n --------------------->" + "Transactions")
+		//verify the transactions
+
+	}
 }
 
 var requestVotes = func(client mqtt.Client) {
@@ -432,7 +460,7 @@ func startGinServer() {
 
 func killGinServer() {
 	command := fmt.Sprintf("lsof -i tcp:%s | grep LISTEN | awk '{print $2}' | xargs kill -9", "3500")
-	exec_cmd(exec.Command("bash", "-c", command))
+	exec_cmd(exec.Command("/bin/bash", "-c", command))
 }
 
 func exec_cmd(cmd *exec.Cmd) {
