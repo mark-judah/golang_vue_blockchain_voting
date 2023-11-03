@@ -5,15 +5,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/fs"
 	"log"
 	"math/rand"
 	"net/http"
 	"os"
 	"os/exec"
 	"strconv"
-	"syscall"
 	"time"
 	"vote_backend/controller"
+	ui "vote_backend/ui"
 	"vote_backend/utils"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
@@ -63,6 +64,9 @@ func main() {
 	if token := client.Connect(); token.Wait() && token.Error() != nil {
 		panic(token.Error())
 	}
+
+	//for the admin panel(vue)
+	go startHttpServer()
 
 	for {
 		leaderAlive = false
@@ -114,7 +118,7 @@ func main() {
 		if val == "candidate" {
 			//set to zero to avoid requestVotes being called infinitely
 			leaderAliveCounter = 0
-			go killGinServer()
+			//go killApiServer()
 
 		}
 
@@ -122,7 +126,7 @@ func main() {
 			fmt.Println("\n Leader Alive--------------------->" + strconv.FormatBool(leaderAlive))
 			fmt.Println("\n Leader Alive Counter--------------------->" + strconv.Itoa(leaderAliveCounter))
 			fmt.Println(getClientState())
-			go killGinServer()
+			go killApiServer()
 		}
 
 		time.Sleep(time.Duration(time.Second))
@@ -264,7 +268,7 @@ var receiveMsgs mqtt.MessageHandler = func(client mqtt.Client, message mqtt.Mess
 
 			if len(myVotes) == getTotalConnectedNodes() {
 				setRaftState("leader")
-				go startGinServer()
+				go startApiServer()
 			}
 
 		}
@@ -457,7 +461,7 @@ func setVoteAndTerm(candidateNodeId string, term string, vote string) {
 	}
 }
 
-func startGinServer() {
+func startApiServer() {
 	//only the leader can create a router and receive requests
 	//if the server is unreachable, the leader is probably dead
 	router := gin.Default()
@@ -465,23 +469,53 @@ func startGinServer() {
 	router.Run("localhost:3500")
 }
 
-func killGinServer() {
-	command := fmt.Sprintf("lsof -i tcp:%s | grep LISTEN | awk '{print $2}' | xargs kill -9", "3500")
-	exec_cmd(exec.Command("/bin/bash", "-c", command))
+func startHttpServer() {
+	srv := &http.Server{
+		Addr:    ":8080",
+		Handler: router(),
+	}
+	cmd := exec.Command("npm", "run", "serve")
+	cmd.Dir = "ui"
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err := cmd.Start()
+	if err != nil {
+		fmt.Printf("%s", err)
+		fmt.Println("Command Successfully Executed")
+		srv.ListenAndServe()
+	}
 }
 
-func exec_cmd(cmd *exec.Cmd) {
-	var waitStatus syscall.WaitStatus
-	if err := cmd.Run(); err != nil {
-		if err != nil {
-			os.Stderr.WriteString(fmt.Sprintf("Error: %s\n", err.Error()))
-		}
-		if exitError, ok := err.(*exec.ExitError); ok {
-			waitStatus = exitError.Sys().(syscall.WaitStatus)
-			fmt.Printf("Error during killing (exit code: %s)\n", []byte(fmt.Sprintf("%d", waitStatus.ExitStatus())))
-		}
-	} else {
-		waitStatus = cmd.ProcessState.Sys().(syscall.WaitStatus)
-		fmt.Printf("Port successfully killed (exit code: %s)\n", []byte(fmt.Sprintf("%d", waitStatus.ExitStatus())))
+func router() http.Handler {
+	mux := http.NewServeMux()
+
+	// index page
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		controller.Index(&gin.Context{})
+	})
+
+	// static files
+	staticFS, _ := fs.Sub(ui.Static, "public")
+	httpFS := http.FileServer(http.FS(staticFS))
+	mux.Handle("/static/", httpFS)
+
+	// api
+	mux.HandleFunc("/new-vote", func(w http.ResponseWriter, r *http.Request) {
+		controller.NewVote(&gin.Context{})
+	})
+	return mux
+}
+
+func killApiServer() {
+	//kill the api server so that only the leader node receives api requests
+	command := "fuser -n tcp -k 3500"
+
+	out, err := exec.Command(command).Output()
+	if err != nil {
+		fmt.Printf("%s", err)
+		fmt.Println("Command Successfully Executed")
+		output := string(out[:])
+		fmt.Println(output)
+		print("Api server killed")
 	}
 }
