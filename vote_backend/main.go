@@ -10,7 +10,6 @@ import (
 	"os/exec"
 	"strconv"
 	"time"
-	"vote_backend/broker"
 	"vote_backend/controller"
 	ui "vote_backend/ui"
 	"vote_backend/utils"
@@ -21,7 +20,8 @@ import (
 func main() {
 
 	//first thread
-	broker.InitMqttClient()
+	controller.InitMqttClient()
+	controller.InitSqlite()
 	utils.SetRaftState("follower")
 	utils.SetRaftTerm(0)
 	utils.SetVoteAndTerm("0", "0", "0")
@@ -30,7 +30,6 @@ func main() {
 	go startHttpServer()
 
 	for {
-		//broker.LeaderAlive = false
 
 		key := utils.ReadClientID() + "state"
 		val, err := utils.RedisClient.Get(utils.Ctx, key).Result()
@@ -38,10 +37,10 @@ func main() {
 			panic(err)
 		}
 		fmt.Println("\n My state----->" + val)
-		if !broker.LeaderAlive {
-			broker.LeaderAliveCounter = broker.LeaderAliveCounter + 1
+		if !controller.LeaderAlive {
+			controller.LeaderAliveCounter = controller.LeaderAliveCounter + 1
 		}
-		if broker.LeaderAliveCounter >= 10 && val == "follower" {
+		if controller.LeaderAliveCounter >= 10 && val == "follower" {
 			fmt.Println("Leader Dead")
 			requestVotes()
 
@@ -54,7 +53,7 @@ func main() {
 				panic(err)
 			}
 
-			myPayload := append(broker.LeaderPayload, val, "Leader Alive")
+			myPayload := append(controller.LeaderPayload, val, "Leader Alive")
 
 			jsonData, err2 := json.Marshal(myPayload)
 			if err2 != nil {
@@ -63,29 +62,37 @@ func main() {
 
 			time.Sleep(time.Duration(time.Second))
 			// publish a message every one second
-			token := broker.Client[0].Publish("leaderNodePulse/"+key, 0, false, jsonData)
+			token := controller.Client[0].Publish("leaderNodePulse/"+key, 0, false, jsonData)
 			token.Wait()
 
 			//check Raft Log
-			println("Raft Log: " + fmt.Sprintf("%+v", controller.Log.Transactions))
+			println("Raft leader Log: " + fmt.Sprintf("%+v", controller.Log.Transactions))
 			transactionData, err3 := json.Marshal(controller.Log)
 			if err3 != nil {
 				panic(err3)
 			}
-			token2 := broker.Client[0].Publish("raftLog/1", 0, false, transactionData)
-			token2.Wait()
+
+			if controller.LeaderLogSize < len(controller.Log.Transactions) {
+				token2 := controller.Client[0].Publish("raftLogAppend/1", 0, false, transactionData)
+				token2.Wait()
+
+			}
+			fmt.Println(len(controller.Log.Transactions))
+			fmt.Println(controller.LeaderLogSize)
+
 		}
 
 		if val == "candidate" {
 			//set to zero to avoid requestVotes being called infinitely
-			broker.LeaderAliveCounter = 0
+			controller.LeaderAliveCounter = 0
 			go killApiServer()
 
 		}
 
 		if val == "follower" {
-			fmt.Println("\n Leader Alive--------------------->" + strconv.FormatBool(broker.LeaderAlive))
-			fmt.Println("\n Leader Alive Counter--------------------->" + strconv.Itoa(broker.LeaderAliveCounter))
+			fmt.Println("\n Leader Alive--------------------->" + strconv.FormatBool(controller.LeaderAlive))
+			fmt.Println("\n Leader Alive Counter--------------------->" + strconv.Itoa(controller.LeaderAliveCounter))
+			println("Raft follower Log: " + fmt.Sprintf("%+v", controller.Log.Transactions))
 			fmt.Println(utils.GetClientState())
 			go killApiServer()
 		}
@@ -124,7 +131,7 @@ func requestVotes() {
 	if err2 != nil {
 		panic(err2)
 	}
-	token := broker.Client[0].Publish("election/1", 0, false, jsonData)
+	token := controller.Client[0].Publish("election/1", 0, false, jsonData)
 	token.Wait()
 }
 
@@ -160,7 +167,7 @@ func router() http.Handler {
 
 	// api
 	mux.HandleFunc("/new-vote", func(w http.ResponseWriter, r *http.Request) {
-		controller.NewVote(&gin.Context{})
+		controller.NewTransaction(&gin.Context{})
 	})
 	return mux
 }

@@ -1,22 +1,25 @@
 version: '3'
- 
+
 services:
   vote_backend-service-node2:
     network_mode: host
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     depends_on:
       - redis
-      - postgres
       
-
+    volumes:
+      - "./controller:/app/controller"
+      - "./models:/app/models"
+      - "./ui:/app/ui"
+      - "./utils:/app/utils"
+      - "./go.mod:/app/go.mod"
+      - "./go.sum:/app/go.sum"
+      - "./main.go:/app/main.go"
   redis:
     image: redis:latest
     ports:
-      - "6379:6379" 
-
-  postgres:
-    image: postgres:latest
-    ports:
-      - "5432:5432"
+      - "6379:6379"
 
   

@@ -21,10 +21,10 @@ var RedisClient = redis.NewClient(&redis.Options{
 })
 
 func ReadClientID() string {
-	if _, err := os.Stat("clientId"); err == nil {
+	if _, err := os.Stat("clientId.txt"); err == nil {
 		fmt.Printf("File exists\n")
 
-		clientId, err := os.ReadFile("clientId")
+		clientId, err := os.ReadFile("clientId.txt")
 		if err != nil {
 			panic(err)
 		}
@@ -33,13 +33,12 @@ func ReadClientID() string {
 		fmt.Printf("File does not exist\n")
 
 		clientId := []byte(uuid.New().String())
-		err := os.WriteFile("clientId", clientId, 0644)
+		err := os.WriteFile("clientId.txt", clientId, 0644)
 		if err != nil {
 			panic(err)
 		}
 		return string(clientId)
 	}
-
 }
 
 func GetClientTerm() int {

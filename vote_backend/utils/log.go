@@ -5,9 +5,9 @@ import (
 )
 
 type Queue struct {
-	Transactions []models.Vote `json:"transactions"`
+	Transactions []models.Transaction `json:"transactions"`
 }
 
-func (q *Queue) Enqueue(newVote models.Vote) {
+func (q *Queue) Enqueue(newVote models.Transaction) {
 	q.Transactions = append(q.Transactions, newVote)
 }
