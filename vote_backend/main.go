@@ -79,6 +79,7 @@ func main() {
 			}
 			fmt.Println(len(controller.Log.Transactions))
 			fmt.Println(controller.LeaderLogSize)
+			go controller.CreateBlock()
 
 		}
 

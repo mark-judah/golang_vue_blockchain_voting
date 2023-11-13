@@ -1,19 +1,20 @@
 package controller
 
 import (
-	"database/sql"
+	"vote_backend/models"
 
 	_ "github.com/mattn/go-sqlite3"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 )
 
 func InitSqlite() {
-	database, err := sql.Open("sqlite3", "./nodeDB.db")
+	database, err := gorm.Open(sqlite.Open("nodeDB.sql"), &gorm.Config{})
 	if err != nil {
 		panic(err)
 	}
-	statement, err2 := database.Prepare("CREATE TABLE IF NOT EXISTS transactions (transaction_id TEXT PRIMARY KEY, desktop_id TEXT, candidate_id TEXT, hash TEXT,created_by TEXT)")
-	if err2 != nil {
-		panic(err2)
-	}
-	statement.Exec()
+
+	database.AutoMigrate(&models.Transaction{})
+	database.AutoMigrate(&models.Block{})
+
 }
