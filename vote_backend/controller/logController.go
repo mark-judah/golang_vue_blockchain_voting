@@ -1,20 +1,32 @@
-package utils
+package controller
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"vote_backend/models"
 )
 
-type Queue struct {
-	Transactions []models.Transaction `json:"transactions"`
-}
+//var Transactions = make(map[string]models.Transaction)
 
-func (q *Queue) Enqueue(newVote models.Transaction) {
-	q.Transactions = append(q.Transactions, newVote)
-	PersistLog(newVote)
-}
+func Enqueue(newVote models.Transaction) {
+	//q.Transactions = append(q.Transactions, newVote)
+	print("Enqueue key: " + newVote.Txid)
+	// Transactions[newVote.Txid] = newVote
 
+	transactionData, err3 := json.Marshal(newVote)
+	if err3 != nil {
+		panic(err3)
+	}
+
+	token2 := Client[0].Publish("raftLogAppend/1", 0, false, transactionData)
+	token2.Wait()
+}
+func Dequeue(txid string) {
+	fmt.Println("Dequeue called")
+	//delete(Transactions, txid)
+
+}
 func PersistLog(newVote models.Transaction) {
 	data, err := json.MarshalIndent(newVote, "", " ")
 	if err != nil {

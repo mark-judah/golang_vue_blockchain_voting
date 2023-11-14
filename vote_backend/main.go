@@ -65,20 +65,6 @@ func main() {
 			token := controller.Client[0].Publish("leaderNodePulse/"+key, 0, false, jsonData)
 			token.Wait()
 
-			//check Raft Log
-			println("Raft leader Log: " + fmt.Sprintf("%+v", controller.Log.Transactions))
-			transactionData, err3 := json.Marshal(controller.Log)
-			if err3 != nil {
-				panic(err3)
-			}
-
-			if controller.LeaderLogSize < len(controller.Log.Transactions) {
-				token2 := controller.Client[0].Publish("raftLogAppend/1", 0, false, transactionData)
-				token2.Wait()
-
-			}
-			fmt.Println(len(controller.Log.Transactions))
-			fmt.Println(controller.LeaderLogSize)
 			go controller.CreateBlock()
 
 		}
@@ -93,7 +79,6 @@ func main() {
 		if val == "follower" {
 			fmt.Println("\n Leader Alive--------------------->" + strconv.FormatBool(controller.LeaderAlive))
 			fmt.Println("\n Leader Alive Counter--------------------->" + strconv.Itoa(controller.LeaderAliveCounter))
-			println("Raft follower Log: " + fmt.Sprintf("%+v", controller.Log.Transactions))
 			fmt.Println(utils.GetClientState())
 			go killApiServer()
 		}

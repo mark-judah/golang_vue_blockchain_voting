@@ -4,14 +4,11 @@ import (
 	"fmt"
 	"net/http"
 	"vote_backend/models"
-	"vote_backend/utils"
 
 	"github.com/gin-gonic/gin"
 )
 
-// the log uses a queue datastructure
-var Log = utils.Queue{}
-var LeaderLogSize = 0
+// the log uses a queue datastructure for temporary storage and a json file for permanent storage
 
 func NewTransaction(context *gin.Context) {
 	fmt.Println("...............New vote", context.Request.Body)
@@ -21,6 +18,7 @@ func NewTransaction(context *gin.Context) {
 		return
 	}
 
-	Log.Enqueue(newTransaction)
+	Enqueue(newTransaction)
+
 	context.IndentedJSON(http.StatusCreated, newTransaction)
 }
