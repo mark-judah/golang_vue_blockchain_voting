@@ -8,8 +8,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// the log uses a queue datastructure for temporary storage and a json file for permanent storage
-
 func NewTransaction(context *gin.Context) {
 	fmt.Println("...............New vote", context.Request.Body)
 
@@ -18,7 +16,7 @@ func NewTransaction(context *gin.Context) {
 		return
 	}
 
-	Enqueue(newTransaction)
+	AppendToLeader(newTransaction)
 
 	context.IndentedJSON(http.StatusCreated, newTransaction)
 }

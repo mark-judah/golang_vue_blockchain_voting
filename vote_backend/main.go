@@ -25,7 +25,7 @@ func main() {
 	utils.SetRaftState("follower")
 	utils.SetRaftTerm(0)
 	utils.SetVoteAndTerm("0", "0", "0")
-
+	controller.NodeSync()
 	//for the admin panel(vue)
 	go startHttpServer()
 

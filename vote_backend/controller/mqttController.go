@@ -24,7 +24,6 @@ var LeaderAliveCounter = 0
 var LeaderPayload []string
 var MyVotes []string
 var Client []mqtt.Client
-var logAppendConfirmations = 0
 
 func InitMqttClient() {
 	mqtt.DEBUG = log.New(os.Stdout, "", 0)
@@ -72,12 +71,22 @@ var connectHandler mqtt.OnConnectHandler = func(client mqtt.Client) {
 		os.Exit(1)
 	}
 
-	if token := client.Subscribe("raftLogAppend/#", 0, nil); token.Wait() && token.Error() != nil {
+	if token := client.Subscribe("followerAppend/#", 0, nil); token.Wait() && token.Error() != nil {
 		fmt.Println(token.Error())
 		os.Exit(1)
 	}
 
 	if token := client.Subscribe("raftLogAppendConfirmation/#", 0, nil); token.Wait() && token.Error() != nil {
+		fmt.Println(token.Error())
+		os.Exit(1)
+	}
+
+	if token := client.Subscribe("leaderLogRequest/#", 0, nil); token.Wait() && token.Error() != nil {
+		fmt.Println(token.Error())
+		os.Exit(1)
+	}
+
+	if token := client.Subscribe("leaderLogResponse/#", 0, nil); token.Wait() && token.Error() != nil {
 		fmt.Println(token.Error())
 		os.Exit(1)
 	}
@@ -91,15 +100,20 @@ var receiveMsgs mqtt.MessageHandler = func(client mqtt.Client, message mqtt.Mess
 	var dataArray []string
 	var newTransaction models.Transaction
 	var responseString string
-	err := json.Unmarshal(message.Payload(), &dataArray)
-	if err != nil {
-		err := json.Unmarshal(message.Payload(), &newTransaction)
+	var leaderTransactions []models.Transaction
+
+	err1 := json.Unmarshal(message.Payload(), &dataArray)
+	if err1 != nil {
+		err2 := json.Unmarshal(message.Payload(), &newTransaction)
 		println("Raft Log content: " + fmt.Sprintf("%+v", newTransaction))
-		if err != nil {
-			err := json.Unmarshal(message.Payload(), &responseString)
+		if err2 != nil {
+			err3 := json.Unmarshal(message.Payload(), &responseString)
 			println("Append Response: " + fmt.Sprintf("%+v", &responseString))
-			if err != nil {
-				fmt.Println("Error unmarshalling as string,  string array or as Map:", err)
+			if err3 != nil {
+				err4 := json.Unmarshal(message.Payload(), &leaderTransactions)
+				if err4 != nil {
+					fmt.Println("Error unmarshalling as string,  string array Map or as transactions array:", err4)
+				}
 			}
 		}
 
@@ -110,8 +124,13 @@ var receiveMsgs mqtt.MessageHandler = func(client mqtt.Client, message mqtt.Mess
 	if len(dataArray) > 0 {
 		if dataArray[1] == "Leader Alive" {
 			println("-------------------->Leader Alive")
+
 			if utils.GetClientState() != "leader" {
-				utils.SetRaftState("follower")
+				if utils.GetClientState() == "syncing" {
+					fmt.Println("Skipping syncing node")
+				} else {
+					utils.SetRaftState("follower")
+				}
 			}
 			time.Sleep(time.Duration(time.Second))
 			LeaderAlive = true
@@ -198,7 +217,7 @@ var receiveMsgs mqtt.MessageHandler = func(client mqtt.Client, message mqtt.Mess
 
 	}
 
-	if string(message.Topic()) == "raftLogAppend/1" {
+	if string(message.Topic()) == "followerAppend/1" {
 		fmt.Println("\n --------------------->" + "New Transaction to Append")
 
 		//update log with new transaction
@@ -221,34 +240,43 @@ var receiveMsgs mqtt.MessageHandler = func(client mqtt.Client, message mqtt.Mess
 			//ensure that the voter hasnt already voted
 			//insert verified transaction into db
 			database.Create(&newTransaction)
-			jsonData, err2 := json.Marshal(newTransaction)
+
+		}
+	}
+
+	if string(message.Topic()) == "leaderLogRequest/1" {
+		if utils.GetClientState() == "leader" {
+			logFile, err := os.ReadFile("log.json")
+			if err != nil {
+				panic(err)
+			}
+			var transactions []models.Transaction
+
+			err2 := json.Unmarshal(logFile, &transactions)
 			if err2 != nil {
 				panic(err2)
 			}
-			token := Client[0].Publish("raftLogAppendConfirmation/1", 0, false, jsonData)
+			jsonData, err3 := json.Marshal(transactions)
+			if err3 != nil {
+				panic(err3)
+			}
+			token := client.Publish("leaderLogResponse/1", 0, false, jsonData)
 			token.Wait()
 
 		}
 	}
-	if string(message.Topic()) == "raftLogAppendConfirmation/1" {
-		logAppendConfirmations = logAppendConfirmations + 1
-		fmt.Println("\n --------------------->" + "New Append Confrimation")
-		if utils.GetClientState() == "leader" {
-			//if majority of follower nodes have updated their log, the nodes can commit to the raft log.json file
-			//and update their databases
-			fmt.Println("Total confirmations" + strconv.Itoa(logAppendConfirmations))
-			fmt.Println("Half connected nodes" + strconv.Itoa(getTotalConnectedNodes()/2))
 
-			if logAppendConfirmations >= getTotalConnectedNodes()/2 {
-				fmt.Println("Writing to db" + fmt.Sprintf("%+v", newTransaction))
+	if string(message.Topic()) == "leaderLogResponse/1" {
+		if utils.GetClientState() == "syncing" {
+			for _, x := range leaderTransactions {
+				fmt.Println("Writing to db" + fmt.Sprintf("%+v", x))
 				database, err := gorm.Open(sqlite.Open("nodeDB.sql"), &gorm.Config{})
 				if err != nil {
 					panic(err)
 				}
 				//commit to log.json file
-				PersistLog(newTransaction)
+				PersistLog(x)
 
-				//decrease leader log counter to match map size
 				//verify the transactions...call  a vote verification function, return bool
 				//ensure that the txid is valid, and was generated by an official client app
 				//ensure that the node id is valid
@@ -257,18 +285,17 @@ var receiveMsgs mqtt.MessageHandler = func(client mqtt.Client, message mqtt.Mess
 				//ensure that the voter exists and that the voters details hash matches the stored hash
 				//ensure that the voter hasnt already voted
 				//insert verified transaction into db
-				database.Create(&newTransaction)
-
+				database.Create(&x)
 			}
 		}
 
+		//if file exists, check if follower log entries match the leader nodes entries, if not append from the last matching value
+		//as soon as the leader node file size matches the syncing node file size, set the raft state to leader, if it doen;t match
+		//call the nodeSync function recursively
+		//set state to follower once it is confirmed that the logs match
 	}
 
 }
-
-// func saveTransactionToDB(newTransaction map[string]models.Transaction, state string) {
-
-// }
 
 func getTotalConnectedNodes() int {
 	username := "920ed6b2165341ff"
