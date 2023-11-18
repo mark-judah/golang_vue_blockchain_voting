@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"vote_backend/models"
 	"vote_backend/utils"
@@ -54,6 +55,7 @@ func PersistLog(newVote models.Transaction) {
 	if err != nil {
 		panic(err)
 	}
+
 	defer logFile.Close()
 	check_file, err2 := os.Stat("log.json")
 	if err2 != nil {
@@ -97,10 +99,9 @@ func PersistLog(newVote models.Transaction) {
 }
 
 func NodeSync() {
-	//if no log file exists, fetch leader log.json and loop each transaction
-	_, err := os.ReadFile("log.json")
-	if err != nil {
-		//no file
+	fmt.Println("Leader status:" + strconv.FormatBool(LeaderAlive))
+	if LeaderAlive && utils.GetClientState() != "leader" {
+
 		utils.SetRaftState("syncing")
 		token := Client[0].Publish("leaderLogRequest/1", 0, false, "requesting leader log")
 		token.Wait()

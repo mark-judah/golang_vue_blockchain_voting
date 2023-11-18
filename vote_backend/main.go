@@ -19,18 +19,20 @@ import (
 
 func main() {
 
-	//first thread
 	controller.InitMqttClient()
 	controller.InitSqlite()
 	utils.SetRaftState("follower")
 	utils.SetRaftTerm(0)
 	utils.SetVoteAndTerm("0", "0", "0")
-	controller.NodeSync()
 	//for the admin panel(vue)
 	go startHttpServer()
 
+	var nodeSyncCounter = 0
 	for {
 
+		if nodeSyncCounter == 1 {
+			controller.NodeSync()
+		}
 		key := utils.ReadClientID() + "state"
 		val, err := utils.RedisClient.Get(utils.Ctx, key).Result()
 		if err != nil {
@@ -81,12 +83,16 @@ func main() {
 			fmt.Println("\n Leader Alive Counter--------------------->" + strconv.Itoa(controller.LeaderAliveCounter))
 			fmt.Println(utils.GetClientState())
 			go killApiServer()
+
 		}
 
 		time.Sleep(time.Duration(time.Second))
 
 		fmt.Println("\n My id----->" + utils.ReadClientID())
 
+		if controller.LeaderAlive {
+			nodeSyncCounter = nodeSyncCounter + 1
+		}
 	}
 
 }
@@ -136,6 +142,7 @@ func startHttpServer() {
 		fmt.Println("Command Successfully Executed")
 		srv.ListenAndServe()
 	}
+
 }
 
 func router() http.Handler {
