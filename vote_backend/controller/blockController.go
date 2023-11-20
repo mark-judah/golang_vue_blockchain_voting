@@ -1,32 +1,123 @@
 package controller
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"os"
+	"strconv"
+	"strings"
 	"vote_backend/models"
+	"vote_backend/utils"
 
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
 
 func CreateBlock() {
-	fmt.Println("creating block")
-
-	database, err := gorm.Open(sqlite.Open("nodeDB.sql"), &gorm.Config{})
+	var transactionsCount []models.Transaction
+	transactionsTable, err := gorm.Open(sqlite.Open("nodeDB.sql"), &gorm.Config{})
 	if err != nil {
 		panic(err)
 	}
-	//fetch oldest five rows
-	var transactions []models.Transaction
-	database.Limit(5).Order("created_at asc").Find(&transactions)
+	transactionsTable.Find(&transactionsCount)
 
-	jsonData, err := json.Marshal(transactions)
+	fmt.Println("Total transactions in database: " + strconv.Itoa(len(transactionsCount)))
+	//todo: if the transactins are less than 5 for a long time, create a block with the few transactions available
+	if len(transactionsCount) >= 5 {
+		fmt.Println("Creating new block")
+
+		//fetch oldest five rows
+		var transactions []models.Transaction
+
+		transactionsTable.Limit(5).Order("created_at asc").Find(&transactions)
+
+		jsonData, err := json.Marshal(transactions)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println("Oldest 5 transactions: " + string(jsonData))
+
+		//create block
+
+		var lastBlock models.Block
+		blockTable, err2 := gorm.Open(sqlite.Open("nodeDB.sql"), &gorm.Config{})
+		if err2 != nil {
+			panic(err2)
+		}
+		blockTable.Limit(1).Order("created_at desc").Find(&lastBlock)
+		newBlock := models.Block{Version: 1, PreviousBlockHash: lastBlock.BlockHash, CreatedBy: utils.ReadClientID(), Data: string(jsonData)}
+		newBlockBytes, err3 := json.Marshal(newBlock)
+		if err3 != nil {
+			panic(err3)
+		}
+		sum := sha256.Sum256([]byte(newBlockBytes))
+		newBlock.BlockHash = hex.EncodeToString(sum[:])
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println("New block")
+		fmt.Println(newBlock)
+		//insert into db
+		result := blockTable.Create(&newBlock)
+		if result.Error == nil {
+			transactionsTable.Delete(&transactions)
+		}
+		appendToChain(newBlock)
+
+	}
+
+}
+
+func appendToChain(newBlock models.Block) {
+	data, err := json.MarshalIndent(newBlock, "", " ")
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(string(jsonData))
 
-	//create block
+	chainFile, err := os.OpenFile("chain.json", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		panic(err)
+	}
 
-	//insert into db
+	defer chainFile.Close()
+	check_file, err2 := os.Stat("chain.json")
+	if err2 != nil {
+		panic(err2)
+	}
+	if check_file.Size() == 0 {
+		_, err3 := chainFile.WriteString("[" + "\n" + string(data) + "\n" + "]")
+		if err3 != nil {
+			panic(err3)
+		}
+	} else {
+		//delete closing ] first
+		b, err3 := os.ReadFile("chain.json")
+		if err3 != nil {
+			panic(err3)
+		}
+		//convert file to string
+		stringJson := string(b)
+		//remove ]
+		c := strings.Replace(stringJson, "]", "", -1)
+		//delete the file
+		err4 := os.Remove("chain.json")
+		if err4 != nil {
+			panic(err4)
+		}
+		//recreate the file
+		newFile, err5 := os.OpenFile("chain.json", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		if err5 != nil {
+			panic(err5)
+		}
+		_, err6 := newFile.WriteString(c)
+		if err6 != nil {
+			panic(err6)
+		}
+		_, err7 := newFile.WriteString("," + string(data) + "\n" + "]")
+		if err7 != nil {
+			panic(err7)
+		}
+	}
 }

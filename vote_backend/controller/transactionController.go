@@ -11,12 +11,12 @@ import (
 func NewTransaction(context *gin.Context) {
 	fmt.Println("...............New vote", context.Request.Body)
 
-	newTransaction := models.Transaction{}
+	var newTransaction []models.Transaction
 	if err := context.BindJSON(&newTransaction); err != nil {
 		return
 	}
-
-	AppendToLeader(newTransaction)
-
+	for _, x := range newTransaction {
+		AppendToLeader(x)
+	}
 	context.IndentedJSON(http.StatusCreated, newTransaction)
 }

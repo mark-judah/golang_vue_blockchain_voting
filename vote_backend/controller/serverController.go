@@ -12,5 +12,6 @@ func StartApiServer() {
 	//if the server is unreachable, the leader is probably dead
 	router := gin.Default()
 	router.POST("/new-vote", NewTransaction)
+	router.POST("/tally-votes", Tally)
 	router.Run("localhost:3500")
 }

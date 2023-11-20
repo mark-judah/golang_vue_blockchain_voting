@@ -92,6 +92,11 @@ var connectHandler mqtt.OnConnectHandler = func(client mqtt.Client) {
 		os.Exit(1)
 	}
 
+	if token := client.Subscribe("tallyVotes/#", 0, nil); token.Wait() && token.Error() != nil {
+		fmt.Println(token.Error())
+		os.Exit(1)
+	}
+
 }
 
 var connectLostHandler mqtt.ConnectionLostHandler = func(client mqtt.Client, err error) {

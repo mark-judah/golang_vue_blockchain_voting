@@ -67,8 +67,6 @@ func main() {
 			token := controller.Client[0].Publish("leaderNodePulse/"+key, 0, false, jsonData)
 			token.Wait()
 
-			go controller.CreateBlock()
-
 		}
 
 		if val == "candidate" {
@@ -93,6 +91,9 @@ func main() {
 		if controller.LeaderAlive {
 			nodeSyncCounter = nodeSyncCounter + 1
 		}
+
+		go controller.CreateBlock()
+
 	}
 
 }
