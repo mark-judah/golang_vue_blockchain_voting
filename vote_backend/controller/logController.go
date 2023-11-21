@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"strconv"
-	"strings"
 	"vote_backend/models"
 	"vote_backend/utils"
 
@@ -50,7 +49,6 @@ func PersistLog(newVote models.Transaction) {
 	if err != nil {
 		panic(err)
 	}
-
 	logFile, err := os.OpenFile("log.json", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		panic(err)
@@ -67,32 +65,44 @@ func PersistLog(newVote models.Transaction) {
 			panic(err3)
 		}
 	} else {
-		//delete closing ] first
-		b, err3 := os.ReadFile("log.json")
-		if err3 != nil {
-			panic(err3)
-		}
-		//convert file to string
-		stringJson := string(b)
-		//remove ]
-		c := strings.Replace(stringJson, "]", "", -1)
-		//delete the file
-		err4 := os.Remove("log.json")
+		// read the file into an array of structs
+		file, err4 := os.ReadFile("log.json")
 		if err4 != nil {
 			panic(err4)
 		}
-		//recreate the file
-		newFile, err5 := os.OpenFile("log.json", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+
+		var logsTransactions []models.Transaction
+
+		err5 := json.Unmarshal(file, &logsTransactions)
 		if err5 != nil {
 			panic(err5)
 		}
-		_, err6 := newFile.WriteString(c)
+
+		// add the new block to the array
+		logsTransactions = append(logsTransactions, newVote)
+		data, err6 := json.MarshalIndent(logsTransactions, "", " ")
 		if err6 != nil {
 			panic(err6)
 		}
-		_, err7 := newFile.WriteString("," + string(data) + "\n" + "]")
+
+		// delete the file
+		err7 := os.Remove("log.json")
 		if err7 != nil {
 			panic(err7)
+		} else {
+			fmt.Println("File deleted")
+		}
+		// recreate the file
+		newFile, err8 := os.OpenFile("log.json", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		if err8 != nil {
+			panic(err8)
+		}
+		defer newFile.Close()
+
+		// write to the file
+		_, err9 := newFile.WriteString("\n" + string(data) + "\n")
+		if err9 != nil {
+			panic(err9)
 		}
 	}
 

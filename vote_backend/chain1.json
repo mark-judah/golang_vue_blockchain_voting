@@ -1,0 +1,29 @@
+[
+{
+ "Index": 1,
+ "Version": 1,
+ "BlockHash": "fe026c26572e6dbbeaa967e050e3613bf6ae7cabb0b56eee5cecdfc853a63152",
+ "PreviousBlockHash": "",
+ "CreatedBy": "0bc9c713-cf2a-41bf-9eaf-98ca5e97ab73",
+ "CreatedAt": "2023-11-21T00:14:17.81132901Z",
+ "Data": "[{\"txid\":\"a389e21-6dcd-4b7a-9df0-744cbee425b1\",\"nodeId\":\"flutter1\",\"candidateId\":\"candidate001\",\"timestamp\":\"2023-11-21T00:14:16.805306181Z\",\"transactionHash\":\"cd0aa9856147b6c5b4ff2b7dfee5da20aa38253099ef1b4a64aced233c9afe29\"},{\"txid\":\"b389e21-6dcd-4b7a-9df0-744cbee425b1\",\"nodeId\":\"flutter2\",\"candidateId\":\"candidate002\",\"timestamp\":\"2023-11-21T00:14:16.814400041Z\",\"transactionHash\":\"dd0aa9856147b6c5b4ff2b7dfee5da20aa38253099ef1b4a64aced233c9afe29\"},{\"txid\":\"c389e21-6dcd-4b7a-9df0-744cbee425b1\",\"nodeId\":\"flutter3\",\"candidateId\":\"candidate003\",\"timestamp\":\"2023-11-21T00:14:16.82533051Z\",\"transactionHash\":\"ed0aa9856147b6c5b4ff2b7dfee5da20aa38253099ef1b4a64aced233c9afe29\"},{\"txid\":\"d389e21-6dcd-4b7a-9df0-744cbee425b1\",\"nodeId\":\"flutter4\",\"candidateId\":\"candidate003\",\"timestamp\":\"2023-11-21T00:14:16.830138702Z\",\"transactionHash\":\"fd0aa9856147b6c5b4ff2b7dfee5da20aa38253099ef1b4a64aced233c9afe29\"},{\"txid\":\"e389e21-6dcd-4b7a-9df0-744cbee425b1\",\"nodeId\":\"flutter5\",\"candidateId\":\"candidate003\",\"timestamp\":\"2023-11-21T00:14:16.842468723Z\",\"transactionHash\":\"gd0aa9856147b6c5b4ff2b7dfee5da20aa38253099ef1b4a64aced233c9afe29\"}"
+}
+,{
+ "Index": 2,
+ "Version": 1,
+ "BlockHash": "e6012eab14e8654533760b47f293fdfb810484ec561c146ea22d28e86deee6bd",
+ "PreviousBlockHash": "fe026c26572e6dbbeaa967e050e3613bf6ae7cabb0b56eee5cecdfc853a63152",
+ "CreatedBy": "0bc9c713-cf2a-41bf-9eaf-98ca5e97ab73",
+ "CreatedAt": "2023-11-21T00:14:18.814667237Z",
+ "Data": "[{\"txid\":\"f389e21-6dcd-4b7a-9df0-744cbee425b1\",\"nodeId\":\"flutter1\",\"candidateId\":\"candidate001\",\"timestamp\":\"2023-11-21T00:14:16.848216861Z\",\"transactionHash\":\"cd0aa9856147b6c5b4ff2b7dfee5da20aa38253099ef1b4a64aced233c9afe29\"},{\"txid\":\"g389e21-6dcd-4b7a-9df0-744cbee425b1\",\"nodeId\":\"flutter2\",\"candidateId\":\"candidate002\",\"timestamp\":\"2023-11-21T00:14:16.852840867Z\",\"transactionHash\":\"dd0aa9856147b6c5b4ff2b7dfee5da20aa38253099ef1b4a64aced233c9afe29\"},{\"txid\":\"h389e21-6dcd-4b7a-9df0-744cbee425b1\",\"nodeId\":\"flutter3\",\"candidateId\":\"candidate003\",\"timestamp\":\"2023-11-21T00:14:16.857952914Z\",\"transactionHash\":\"ed0aa9856147b6c5b4ff2b7dfee5da20aa38253099ef1b4a64aced233c9afe29\"},{\"txid\":\"i389e21-6dcd-4b7a-9df0-744cbee425b1\",\"nodeId\":\"flutter4\",\"candidateId\":\"candidate003\",\"timestamp\":\"2023-11-21T00:14:16.868357347Z\",\"transactionHash\":\"fd0aa9856147b6c5b4ff2b7dfee5da20aa38253099ef1b4a64aced233c9afe29\"},{\"txid\":\"j389e21-6dcd-4b7a-9df0-744cbee425b1\",\"nodeId\":\"flutter5\",\"candidateId\":\"candidate003\",\"timestamp\":\"2023-11-21T00:14:16.875390393Z\",\"transactionHash\":\"gd0aa9856147b6c5b4ff2b7dfee5da20aa38253099ef1b4a64aced233c9afe29\"}"
+}
+,{
+ "Index": 3,
+ "Version": 1,
+ "BlockHash": "5805e5f3f0ec4933e5f8ff413b46a5d57a3117fe425edce5673ed07fbcf2cc49",
+ "PreviousBlockHash": "e6012eab14e8654533760b47f293fdfb810484ec561c146ea22d28e86deee6bd",
+ "CreatedBy": "0bc9c713-cf2a-41bf-9eaf-98ca5e97ab73",
+ "CreatedAt": "2023-11-21T00:14:19.822157056Z",
+ "Data": "[{\"txid\":\"k389e21-6dcd-4b7a-9df0-744cbee425b1\",\"nodeId\":\"flutter1\",\"candidateId\":\"candidate001\",\"timestamp\":\"2023-11-21T00:14:16.879823547Z\",\"transactionHash\":\"cd0aa9856147b6c5b4ff2b7dfee5da20aa38253099ef1b4a64aced233c9afe29\"},{\"txid\":\"l389e21-6dcd-4b7a-9df0-744cbee425b1\",\"nodeId\":\"flutter2\",\"candidateId\":\"candidate002\",\"timestamp\":\"2023-11-21T00:14:16.883921979Z\",\"transactionHash\":\"dd0aa9856147b6c5b4ff2b7dfee5da20aa38253099ef1b4a64aced233c9afe29\"},{\"txid\":\"m389e21-6dcd-4b7a-9df0-744cbee425b1\",\"nodeId\":\"flutter3\",\"candidateId\":\"candidate003\",\"timestamp\":\"2023-11-21T00:14:16.887587592Z\",\"transactionHash\":\"ed0aa9856147b6c5b4ff2b7dfee5da20aa38253099ef1b4a64aced233c9afe29\"},{\"txid\":\"n389e21-6dcd-4b7a-9df0-744cbee425b1\",\"nodeId\":\"flutter4\",\"candidateId\":\"candidate003\",\"timestamp\":\"2023-11-21T00:14:16.891140451Z\",\"transactionHash\":\"fd0aa9856147b6c5b4ff2b7dfee5da20aa38253099ef1b4a64aced233c9afe29\"},{\"txid\":\"o389e21-6dcd-4b7a-9df0-744cbee425b1\",\"nodeId\":\"flutter5\",\"candidateId\":\"candidate003\",\"timestamp\":\"2023-11-21T00:14:16.895228252Z\",\"transactionHash\":\"gd0aa9856147b6c5b4ff2b7dfee5da20aa38253099ef1b4a64aced233c9afe29\"}]"
+}
+]

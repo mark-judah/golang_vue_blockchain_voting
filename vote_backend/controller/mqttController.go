@@ -108,7 +108,6 @@ var receiveMsgs mqtt.MessageHandler = func(client mqtt.Client, message mqtt.Mess
 	var newTransaction models.Transaction
 	var responseString string
 	var leaderTransactions []models.Transaction
-
 	err1 := json.Unmarshal(message.Payload(), &dataArray)
 	if err1 != nil {
 		err2 := json.Unmarshal(message.Payload(), &newTransaction)
@@ -333,6 +332,10 @@ var receiveMsgs mqtt.MessageHandler = func(client mqtt.Client, message mqtt.Mess
 			}
 		}
 
+	}
+
+	if string(message.Topic()) == "tallyVotes/1" {
+		TallyFeedback()
 	}
 }
 

@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"os"
 	"strconv"
-	"strings"
 	"vote_backend/models"
 	"vote_backend/utils"
 
@@ -47,13 +46,24 @@ func CreateBlock() {
 			panic(err2)
 		}
 		blockTable.Limit(1).Order("created_at desc").Find(&lastBlock)
-		newBlock := models.Block{Version: 1, PreviousBlockHash: lastBlock.BlockHash, CreatedBy: utils.ReadClientID(), Data: string(jsonData)}
-		newBlockBytes, err3 := json.Marshal(newBlock)
+
+		type HashableBlock struct {
+			Version           int
+			PreviousBlockHash string
+			Data              string
+		}
+
+		hashableBlock := HashableBlock{Version: 1, PreviousBlockHash: lastBlock.BlockHash, Data: string(jsonData)}
+		newBlockBytes, err3 := json.Marshal(hashableBlock)
 		if err3 != nil {
 			panic(err3)
 		}
 		sum := sha256.Sum256([]byte(newBlockBytes))
-		newBlock.BlockHash = hex.EncodeToString(sum[:])
+		blockHash := hex.EncodeToString(sum[:])
+
+		fmt.Println("Hashable block")
+		fmt.Println(hashableBlock)
+		newBlock := models.Block{Version: 1, BlockHash: blockHash, PreviousBlockHash: lastBlock.BlockHash, CreatedBy: utils.ReadClientID(), Data: string(jsonData)}
 		if err != nil {
 			panic(err)
 		}
@@ -92,32 +102,41 @@ func appendToChain(newBlock models.Block) {
 			panic(err3)
 		}
 	} else {
-		//delete closing ] first
-		b, err3 := os.ReadFile("chain.json")
-		if err3 != nil {
-			panic(err3)
-		}
-		//convert file to string
-		stringJson := string(b)
-		//remove ]
-		c := strings.Replace(stringJson, "]", "", -1)
-		//delete the file
-		err4 := os.Remove("chain.json")
+		//read the file into an array of structs
+		blockChainFile, err4 := os.ReadFile("chain.json")
 		if err4 != nil {
 			panic(err4)
 		}
-		//recreate the file
-		newFile, err5 := os.OpenFile("chain.json", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		var nodesBlocks []models.Block
+
+		err5 := json.Unmarshal(blockChainFile, &nodesBlocks)
 		if err5 != nil {
 			panic(err5)
 		}
-		_, err6 := newFile.WriteString(c)
+
+		//add the new block to the array
+		nodesBlocks = append(nodesBlocks, newBlock)
+		data, err6 := json.MarshalIndent(nodesBlocks, "", " ")
 		if err6 != nil {
 			panic(err6)
 		}
-		_, err7 := newFile.WriteString("," + string(data) + "\n" + "]")
+
+		//delete the file
+		err7 := os.Remove("chain.json")
 		if err7 != nil {
 			panic(err7)
+		}
+		//recreate the file
+		newFile, err8 := os.OpenFile("chain.json", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		if err8 != nil {
+			panic(err8)
+		}
+		defer newFile.Close()
+
+		//write to the file
+		_, err9 := newFile.WriteString("\n" + string(data) + "\n")
+		if err9 != nil {
+			panic(err9)
 		}
 	}
 }

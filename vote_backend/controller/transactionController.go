@@ -17,6 +17,7 @@ func NewTransaction(context *gin.Context) {
 	}
 	for _, x := range newTransaction {
 		AppendToLeader(x)
+		fmt.Println(x)
 	}
 	context.IndentedJSON(http.StatusCreated, newTransaction)
 }
