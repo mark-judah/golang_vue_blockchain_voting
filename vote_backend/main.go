@@ -159,10 +159,10 @@ func router() http.Handler {
 	httpFS := http.FileServer(http.FS(staticFS))
 	mux.Handle("/static/", httpFS)
 
-	// api
-	mux.HandleFunc("/new-vote", func(w http.ResponseWriter, r *http.Request) {
-		controller.NewTransaction(&gin.Context{})
-	})
+	// // api
+	// mux.HandleFunc("/new-vote", func(w http.ResponseWriter, r *http.Request) {
+	// 	controller.NewTransaction(&gin.Context{})
+	// })
 	return mux
 }
 

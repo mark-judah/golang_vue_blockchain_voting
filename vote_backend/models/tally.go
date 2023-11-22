@@ -3,9 +3,8 @@ package models
 import "time"
 
 type Tally struct {
-	Index       int `gorm:"primaryKey;auto_increment;not_null"`
-	CandidateId string
+	CandidateId string `gorm:"primaryKey"`
 	// BlockHeight string
-	Total     int
+	Total     int `gorm:"primaryKey"`
 	Timestamp time.Time
 }
