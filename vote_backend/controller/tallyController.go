@@ -10,7 +10,11 @@ import (
 	"vote_backend/models"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 )
+
+var tallyResponses = 0
 
 func Tally(context *gin.Context) {
 
@@ -111,4 +115,30 @@ func TallyFeedback() {
 	fmt.Println("results")
 	fmt.Println(tally)
 
+	tallyData, err := json.Marshal(tally)
+	if err != nil {
+		panic(err)
+	}
+	token := Client[0].Publish("tallyResults/1", 0, false, tallyData)
+	token.Wait()
+}
+
+func FinalTally(tally map[string]int) {
+	tallyResponses++
+
+	fmt.Println("Tally responses: " + strconv.Itoa(tallyResponses))
+	fmt.Println(tally)
+
+	if tallyResponses >= getTotalConnectedNodes()/2 {
+		//store results in tally db
+		database, err := gorm.Open(sqlite.Open("nodeDB.sql"), &gorm.Config{})
+		if err != nil {
+			panic(err)
+		}
+		//create  rows for each candidate
+		for candidate, result := range tally {
+			latestTally := models.Tally{CandidateId: candidate, Total: result}
+			database.Create(&latestTally)
+		}
+	}
 }

@@ -97,6 +97,11 @@ var connectHandler mqtt.OnConnectHandler = func(client mqtt.Client) {
 		os.Exit(1)
 	}
 
+	if token := client.Subscribe("tallyResults/#", 0, nil); token.Wait() && token.Error() != nil {
+		fmt.Println(token.Error())
+		os.Exit(1)
+	}
+
 }
 
 var connectLostHandler mqtt.ConnectionLostHandler = func(client mqtt.Client, err error) {
@@ -108,17 +113,24 @@ var receiveMsgs mqtt.MessageHandler = func(client mqtt.Client, message mqtt.Mess
 	var newTransaction models.Transaction
 	var responseString string
 	var leaderTransactions []models.Transaction
-	err1 := json.Unmarshal(message.Payload(), &dataArray)
+	var tallyResults map[string]int
+
+	err1 := json.Unmarshal(message.Payload(), &tallyResults)
+	// println("Map content: " + fmt.Sprintf("%+v", tallyResults))
+
 	if err1 != nil {
 		err2 := json.Unmarshal(message.Payload(), &newTransaction)
-		println("Raft Log content: " + fmt.Sprintf("%+v", newTransaction))
+		// println("Raft Log content: " + fmt.Sprintf("%+v", newTransaction))
 		if err2 != nil {
 			err3 := json.Unmarshal(message.Payload(), &responseString)
-			println("Append Response: " + fmt.Sprintf("%+v", &responseString))
+			// println("Append Response: " + fmt.Sprintf("%+v", &responseString))
 			if err3 != nil {
 				err4 := json.Unmarshal(message.Payload(), &leaderTransactions)
 				if err4 != nil {
-					fmt.Println("Error unmarshalling as string,  string array Map or as transactions array:", err4)
+					err5 := json.Unmarshal(message.Payload(), &dataArray)
+					if err5 != nil {
+						fmt.Println("Error unmarshalling as string,  string array, map or as transactions array:", err5)
+					}
 				}
 			}
 		}
@@ -336,6 +348,12 @@ var receiveMsgs mqtt.MessageHandler = func(client mqtt.Client, message mqtt.Mess
 
 	if string(message.Topic()) == "tallyVotes/1" {
 		TallyFeedback()
+	}
+
+	if string(message.Topic()) == "tallyResults/1" {
+		fmt.Println(tallyResults)
+		fmt.Println("pass tally")
+		FinalTally(tallyResults)
 	}
 }
 

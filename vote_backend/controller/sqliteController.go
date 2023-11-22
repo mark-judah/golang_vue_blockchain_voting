@@ -16,5 +16,6 @@ func InitSqlite() {
 
 	database.AutoMigrate(&models.Transaction{})
 	database.AutoMigrate(&models.Block{})
+	database.AutoMigrate(&models.Tally{})
 
 }
