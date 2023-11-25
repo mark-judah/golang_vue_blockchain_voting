@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -13,6 +14,8 @@ import (
 
 func CreateUser(context *gin.Context) {
 	var newUser models.Users
+	var currentUserDetails models.Users
+
 	database, err := gorm.Open(sqlite.Open("nodeDB.sql"), &gorm.Config{})
 	if err != nil {
 		context.IndentedJSON(http.StatusBadRequest, err)
@@ -28,11 +31,44 @@ func CreateUser(context *gin.Context) {
 			context.Abort()
 			return
 		}
+		token := context.GetHeader("Authorization")
+		cleanToken := strings.TrimSpace(strings.ReplaceAll(token, "Bearer", ""))
+		email := GetCurrentUser(cleanToken)
+		fmt.Println("token" + cleanToken)
+		if err := database.Where("email=?", email).First(&currentUserDetails).Error; err != nil {
+			log.Fatalln(err)
+		}
+		switch {
+		case newUser.Role == "superuser":
+			context.IndentedJSON(409, "User already exists")
+			return
+
+		case newUser.Role == "hr-admin":
+			if currentUserDetails.Role != "superuser" && currentUserDetails.Role != "hr-admin" {
+				context.IndentedJSON(401, "You are not authorized to perform this action")
+				return
+			}
+		case newUser.Role == "election-admin":
+			if currentUserDetails.Role != "superuser" && currentUserDetails.Role != "hr-admin" {
+				context.IndentedJSON(401, "You are not authorized to perform this action")
+				return
+			}
+		case newUser.Role == "election-officer":
+			if currentUserDetails.Role != "superuser" && currentUserDetails.Role != "hr-admin" {
+				context.IndentedJSON(401, "You are not authorized to perform this action")
+				return
+			}
+		case newUser.Role != "superuser" && newUser.Role != "hr-admin" && newUser.Role != "election-admin" && newUser.Role != "election-officer":
+			context.IndentedJSON(400, "Invalid user role")
+			return
+		}
+
 		result := database.Create(&newUser) // pass pointer of data to Create
 		if result.Error != nil {
-			context.IndentedJSON(http.StatusBadRequest, result.Error)
+			context.IndentedJSON(http.StatusBadRequest, result.Error.Error())
+		} else {
+			context.IndentedJSON(http.StatusCreated, newUser)
 		}
-		context.IndentedJSON(http.StatusCreated, newUser)
 
 	}
 }
@@ -92,7 +128,11 @@ func Login(context *gin.Context) {
 			context.Abort()
 			return
 		}
-		context.IndentedJSON(http.StatusOK, gin.H{"token": token})
+		context.IndentedJSON(http.StatusOK, gin.H{
+			"token":    token,
+			"email":    user.Email,
+			"username": user.Name,
+		})
 	}
 }
 

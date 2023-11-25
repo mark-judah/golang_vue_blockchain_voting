@@ -68,5 +68,6 @@ func GetCurrentUser(signedToken string) (email string) {
 	if !ok {
 		fmt.Println("Error fetching token")
 	}
+	fmt.Println("email", claims.Email)
 	return claims.Email
 }

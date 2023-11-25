@@ -1,27 +1,35 @@
 <template>
-    <nav class="fixed top-0 z-50 w-full bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700">
-        <div class="px-3 py-3 lg:px-5 lg:pl-3">
+    <nav class="fixed top-0 z-50 w-full bg-[#4D4D4D]">
+        <div class="">
             <div class="flex items-center justify-between">
                 <div class="flex items-center justify-start">
-                    <!-- <button type="button" class="" aria-expanded="false" data-dropdown-toggle="logo-sidebar">
-                        <span class="sr-only">Open side bar</span>
-                        <img class="w-8 h-8 rounded-full" src="/images/menu.svg" alt="menu">
-                    </button> -->
+                    <div class="bg-[#1E1E1E] flex ">
+                        <router-link :to="{ name: 'admin' }">
+                            <p class="p-2.5 text-xl font-semibold dark:text-white mr-5">
+                                ChainVote Admin
+                                Dashboard</p>
+                        </router-link>
+                    </div>
+                    <div class="px-1">
+                        <button type="button"
+                            class="flex text-sm  rounded-full focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600"
+                            aria-expanded="false" data-dropdown-toggle="dropdown-user">
+                            <img class="w-8 h-8 rounded-full" src="../assets/images/user.svg" alt="user photo">
 
-                    <a href="/" class="flex ml-2 md:mr-24">
-                        <span class="self-center text-xl font-semibold sm:text-xl whitespace-nowrap dark:text-white"> ChainVote Admin
-                            Dashboard</span>
-                    </a>
+                        </button>
+                    </div>
+                    <div>
+                        <p class="text-white ml-2"> {{ username }}</p>
+                    </div>
                 </div>
                 <div class="flex items-center">
-                    <div class="flex items-center mr-6">
-                        <div>
+                    <div class="flex items-center">
+                                               <div class="px-1">
                             <button type="button"
-                                class="flex text-sm bg-gray-800 rounded-full focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600"
+                                class="flex text-sm  rounded-full"
                                 aria-expanded="false" data-dropdown-toggle="dropdown-user">
                                 <span class="sr-only">Open user menu</span>
-                                <img class="w-8 h-8 rounded-full"
-                                    src="https://flowbite.com/docs/images/people/profile-picture-5.jpg" alt="user photo">
+                                <img class="w-8 h-8 rounded-full" src="../assets/images/admin.svg" alt="user photo">
                             </button>
                         </div>
                         <div class="z-50 hidden my-4 text-base list-none bg-white divide-y divide-gray-100 rounded shadow dark:bg-gray-700 dark:divide-gray-600"
@@ -36,19 +44,19 @@
                             </div>
                             <ul class="py-1" role="none">
                                 <li>
-                                    <a href="#"
+                                    <!-- only visible to superuser and hr-admin -->
+                                    <router-link :to="{ name: 'users' }"
                                         class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:text-white"
-                                        role="menuitem">Dashboard</a>
+                                        role="menuitem">Users </router-link>
                                 </li>
                                 <li>
-                                    <a href="#"
+                                    <router-link :to="{ name: 'admin' }"
                                         class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:text-white"
-                                        role="menuitem">Settings</a>
+                                        role="menuitem">Profile </router-link>
                                 </li>
                                 <li>
-                                    <a href="#"
-                                        class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:text-white"
-                                        role="menuitem">Sign out</a>
+                                    <p v-on:click="logout" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:text-white"
+                                        role="menuitem">Sign out </p>
                                 </li>
                             </ul>
                         </div>
@@ -58,86 +66,82 @@
         </div>
     </nav>
 
-    <div>
+    <div class="">
         <aside id="logo-sidebar"
-            class="fixed top-0 left-0 z-40 w-64 h-screen pt-5 transition-transform -translate-x-full bg-white border-r border-gray-200 sm:translate-x-0 dark:bg-gray-800 dark:border-gray-700"
+            class="fixed  top-0 left-0 z-40 w-80 h-screen pt-5 transition-transform -translate-x-full bg-white border-r border-gray-200 sm:translate-x-0 dark: dark:border-gray-700"
             aria-label="Sidebar">
-            <div class="h-full px-3 pb-4 overflow-y-auto bg-white dark:bg-gray-800">
-                <ul class="space-y-2">
-                    <li>
+            <div class="h-full pb-4 overflow-y-auto bg-[#4D4D4D]">
+                <ul class="mt-7">
+                    <li class="bg-[#1E1E1E] w-full">
                         <router-link :to="{ name: 'admin' }"
                             class="flex items-center p-2 text-base font-normal text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
-                            <img src="/images/home.svg" class="w-6 h-6">
+                            <img src="../assets/images/home.svg" class="w-6 h-8">
                             <span class="ml-3">Home</span>
                         </router-link>
                     </li>
 
                     <li>
-                        <router-link :to="{ name: 'admin' }"
+                        <router-link :to="{ name: 'counties' }"
                             class="flex items-center p-2 text-base font-normal text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
-                            <img src="/app/ui/src/assets/images/election_officials.svg" class="w-6 h-6">
-                            <span class="flex-1 ml-3 whitespace-nowrap">Election Officers</span>
+                            <img src="../assets/images/county.svg" class="w-6 h-8">
+                            <span class="flex-1 ml-3 whitespace-nowrap">Counties</span>
+                        </router-link>
+                    </li>
+
+                    <li class="bg-[#1E1E1E]">
+                        <router-link :to="{ name: 'constituencies' }"
+                            class="flex items-center p-2 text-base font-normal text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
+                            <img src="../assets/images/parliament.svg" class="w-6 h-8">
+                            <span class="flex-1 ml-3 text-left whitespace-nowrap">Constituencies</span>
                         </router-link>
 
                     </li>
 
                     <li>
-                        <a href="/admin-people"
+                        <router-link :to="{ name: 'wards' }"
                             class="flex items-center p-2 text-base font-normal text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
-                            <img src="/images/people.svg" class="w-6 h-6">
-                            <span class="flex-1 ml-3 whitespace-nowrap">Counties</span>
-                        </a>
-                    </li>
-
-                    <li>
-                        <a href="/admin-manage-account"
-                            class="flex items-center p-2 text-base font-normal text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
-                            <img src="/images/admin.svg" class="w-6 h-6">
-                            <span class="flex-1 ml-3 text-left whitespace-nowrap">Constituencies</span>
-                        </a>
-
-                    </li>
-                    <li>
-                        <a href="/logout-auth"
-                            class="flex items-center p-2 text-base font-normal text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
-                            <img src="/images/logout.svg" class="w-6 h-6">
+                            <img src="../assets/images/ward.svg" class="w-6 h-8">
                             <span class="flex-1 ml-3 whitespace-nowrap">Wards</span>
-                        </a>
+                        </router-link>
                     </li>
-                    <li>
-                        <a href="/logout-auth"
+
+                    <li class="bg-[#1E1E1E]">
+                        <router-link :to="{ name: 'polling-stations' }"
                             class="flex items-center p-2 text-base font-normal text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
-                            <img src="/images/logout.svg" class="w-6 h-6">
+                            <img src="../assets/images/queue.svg" class="w-6 h-8">
                             <span class="flex-1 ml-3 whitespace-nowrap">Polling Stations</span>
-                        </a>
+                        </router-link>
                     </li>
+
                     <li>
-                        <a href="/logout-auth"
+                        <router-link :to="{ name: 'candidates' }"
                             class="flex items-center p-2 text-base font-normal text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
-                            <img src="/images/logout.svg" class="w-6 h-6">
+                            <img src="../assets/images/candidates.svg" class="w-6 h-8">
                             <span class="flex-1 ml-3 whitespace-nowrap">Candidates</span>
-                        </a>
+                        </router-link>
                     </li>
-                    <li>
-                        <a href="/logout-auth"
+
+                    <li class="bg-[#1E1E1E]">
+                        <router-link :to="{ name: 'voters' }"
                             class="flex items-center p-2 text-base font-normal text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
-                            <img src="/images/logout.svg" class="w-6 h-6">
+                            <img src="../assets/images/voters.svg" class="w-6 h-8">
                             <span class="flex-1 ml-3 whitespace-nowrap">Voters</span>
-                        </a>
+                        </router-link>
                     </li>
                     <li>
-                        <a href="/logout-auth"
+                        <router-link :to="{ name: 'desktop-clients' }"
                             class="flex items-center p-2 text-base font-normal text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
-                            <img src="/images/logout.svg" class="w-6 h-6">
+                            <img src="../assets/images/desktop_clients.svg" class="w-6 h-8">
                             <span class="flex-1 ml-3 whitespace-nowrap">Desktop Clients</span>
-                        </a>
+                        </router-link>
                     </li>
-                    <li>
-                        <a href="/logout-auth"
+
+                    <li class="bg-[#1E1E1E]">
+                        <router-link :to="{ name: 'transaction-pool' }"
                             class="flex items-center p-2 text-base font-normal text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
-                            <img src="/images/logout.svg" class="w-6 h-6">
+                            <img src="../assets/images/transactions.svg" class="w-6 h-8">
                             <span class="flex-1 ml-3 whitespace-nowrap">Transaction Pool</span>
-                        </a>
+                        </router-link>
                     </li>
                 </ul>
             </div>
@@ -154,8 +158,7 @@ export default {
     const ls = new SecureLS()
     return {
       username: ls.get('user').username,
-      email: ls.get('user').email,
-      token: ls.get('user').token
+      email: ls.get('user').email
     }
   },
   mounted () {
@@ -164,11 +167,18 @@ export default {
   methods: {
     guardMyRoute () {
       const ls = new SecureLS()
-      if (ls.get('user') != null) {
+      if (ls.get('user').token != null) {
         console.log('authenticated')
+        console.log(ls.get('user').token)
       } else {
         window.location.href = '/'
       }
+    },
+
+    logout () {
+      const ls = new SecureLS()
+      ls.removeAll()
+      this.guardMyRoute()
     }
   }
 }

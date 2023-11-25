@@ -35,7 +35,7 @@ func AppendToLeader(newVote models.Transaction) {
 	//ensure that the node id is valid
 	//ensure that the candidate id is valid
 	//ensure that the vote hash is valid
-	//ensure that the voter exists and that the voters details hash matches the stored hash
+	//ensure that the voter exists and that the voters details hash matches the stored hash in atleast half the nodes on the network
 	//ensure that the voter hasnt already voted
 	//insert verified transaction into db
 	database.Create(&newVote)
