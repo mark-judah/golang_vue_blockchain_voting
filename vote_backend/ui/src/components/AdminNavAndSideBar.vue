@@ -24,10 +24,9 @@
                 </div>
                 <div class="flex items-center">
                     <div class="flex items-center">
-                                               <div class="px-1">
-                            <button type="button"
-                                class="flex text-sm  rounded-full"
-                                aria-expanded="false" data-dropdown-toggle="dropdown-user">
+                        <div class="px-1">
+                            <button type="button" class="flex text-sm  rounded-full" aria-expanded="false"
+                                data-dropdown-toggle="dropdown-user">
                                 <span class="sr-only">Open user menu</span>
                                 <img class="w-8 h-8 rounded-full" src="../assets/images/admin.svg" alt="user photo">
                             </button>
@@ -55,7 +54,8 @@
                                         role="menuitem">Profile </router-link>
                                 </li>
                                 <li>
-                                    <p v-on:click="logout" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:text-white"
+                                    <p v-on:click="logout"
+                                        class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:text-white"
                                         role="menuitem">Sign out </p>
                                 </li>
                             </ul>
@@ -143,6 +143,14 @@
                             <span class="flex-1 ml-3 whitespace-nowrap">Transaction Pool</span>
                         </router-link>
                     </li>
+
+                    <li>
+                        <router-link :to="{ name: 'connected-nodes' }"
+                            class="flex items-center p-2 text-base font-normal text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
+                            <img src="../assets/images/node.svg" class="w-6 h-8">
+                            <span class="flex-1 ml-3 whitespace-nowrap">Connected Nodes</span>
+                        </router-link>
+                    </li>
                 </ul>
             </div>
         </aside>
@@ -152,6 +160,7 @@
 
 <script>
 import SecureLS from 'secure-ls'
+import axios from 'axios'
 
 export default {
   data () {
@@ -167,12 +176,19 @@ export default {
   methods: {
     guardMyRoute () {
       const ls = new SecureLS()
-      if (ls.get('user').token != null) {
-        console.log('authenticated')
-        console.log(ls.get('user').token)
-      } else {
-        window.location.href = '/'
+
+      const config = {
+        headers: { Authorization: `Bearer ${ls.get('user').token}` }
       }
+
+      axios.get(
+        'http://127.0.0.1:3500/api/secured/check-auth', config
+      ).then((response) => { }).catch(function (error) {
+        if (error.response.status === 401) {
+          ls.removeAll()
+          window.location.href = '/'
+        }
+      })
     },
 
     logout () {

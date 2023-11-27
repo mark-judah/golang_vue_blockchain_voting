@@ -115,11 +115,12 @@ func TallyFeedback() {
 	fmt.Println("results")
 	fmt.Println(tally)
 
-	tallyData, err := json.Marshal(tally)
+	mqttMessage := models.Message{Type: "tally_results", Payload: tally}
+	data, err := json.Marshal(mqttMessage)
 	if err != nil {
 		panic(err)
 	}
-	token := Client[0].Publish("tallyResults/1", 0, false, tallyData)
+	token := Client[0].Publish("tallyResults/1", 0, false, data)
 	token.Wait()
 }
 

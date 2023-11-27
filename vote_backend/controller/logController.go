@@ -16,11 +16,6 @@ import (
 
 func AppendToLeader(newVote models.Transaction) {
 
-	transactionData, err3 := json.Marshal(newVote)
-	if err3 != nil {
-		panic(err3)
-	}
-
 	fmt.Println("Writing to db" + fmt.Sprintf("%+v", newVote))
 	database, err := gorm.Open(sqlite.Open("nodeDB.sql"), &gorm.Config{})
 	if err != nil {
@@ -39,8 +34,12 @@ func AppendToLeader(newVote models.Transaction) {
 	//ensure that the voter hasnt already voted
 	//insert verified transaction into db
 	database.Create(&newVote)
-
-	token := Client[0].Publish("followerAppend/1", 0, false, transactionData)
+	mqttMessage := models.Message{Type: "new_transaction", Payload: newVote}
+	data, err := json.Marshal(mqttMessage)
+	if err != nil {
+		panic(err)
+	}
+	token := Client[0].Publish("followerAppend/1", 0, false, data)
 	token.Wait()
 }
 
@@ -108,6 +107,73 @@ func PersistLog(newVote models.Transaction) {
 
 }
 
+func PersistAdminDashLog(newAdminDashLog models.AdminDashLog) {
+
+	data, err := json.MarshalIndent(newAdminDashLog, "", " ")
+	if err != nil {
+		panic(err)
+	}
+
+	logFile, err := os.OpenFile("admin_dash_log.json", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		panic(err)
+	}
+
+	defer logFile.Close()
+	check_file, err2 := os.Stat("admin_dash_log.json")
+	if err2 != nil {
+		panic(err2)
+	}
+	if check_file.Size() == 0 {
+		_, err3 := logFile.WriteString("[" + "\n" + string(data) + "\n" + "]")
+		if err3 != nil {
+			panic(err3)
+		}
+	} else {
+		// read the file into an array of structs
+		file, err4 := os.ReadFile("admin_dash_log.json")
+		if err4 != nil {
+			panic(err4)
+		}
+
+		var admin_log []models.AdminDashLog
+
+		err5 := json.Unmarshal(file, &admin_log)
+
+		if err5 != nil {
+			panic(err5)
+		}
+
+		// add the new block to the array
+		admin_log = append(admin_log, newAdminDashLog)
+		data, err6 := json.MarshalIndent(admin_log, "", " ")
+		if err6 != nil {
+			panic(err6)
+		}
+
+		// delete the file
+		err7 := os.Remove("admin_dash_log.json")
+		if err7 != nil {
+			panic(err7)
+		} else {
+			fmt.Println("File deleted")
+		}
+		// recreate the file
+		newFile, err8 := os.OpenFile("admin_dash_log.json", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		if err8 != nil {
+			panic(err8)
+		}
+		defer newFile.Close()
+
+		// write to the file
+		_, err9 := newFile.WriteString("\n" + string(data) + "\n")
+		if err9 != nil {
+			panic(err9)
+		}
+	}
+
+}
+
 func NodeSync() {
 	fmt.Println("Leader status:" + strconv.FormatBool(LeaderAlive))
 	if LeaderAlive && utils.GetClientState() != "leader" {
@@ -117,4 +183,9 @@ func NodeSync() {
 		token.Wait()
 	}
 
+}
+
+func SyncAdminDashLog() {
+	token := Client[0].Publish("leaderAdminDashLogRequest/1", 0, false, "requesting leader admin dash log")
+	token.Wait()
 }

@@ -2,11 +2,13 @@ package controller
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"os"
+	"reflect"
 	"strconv"
 	"time"
 	"vote_backend/models"
@@ -101,7 +103,26 @@ var connectHandler mqtt.OnConnectHandler = func(client mqtt.Client) {
 		fmt.Println(token.Error())
 		os.Exit(1)
 	}
-
+	if token := client.Subscribe("adminTransaction/#", 0, nil); token.Wait() && token.Error() != nil {
+		fmt.Println(token.Error())
+		os.Exit(1)
+	}
+	if token := client.Subscribe("leaderAdminDashLogRequest/#", 0, nil); token.Wait() && token.Error() != nil {
+		fmt.Println(token.Error())
+		os.Exit(1)
+	}
+	if token := client.Subscribe("leaderAdminDashLogResponse/#", 0, nil); token.Wait() && token.Error() != nil {
+		fmt.Println(token.Error())
+		os.Exit(1)
+	}
+	if token := client.Subscribe("nodeStatsRequest/#", 0, nil); token.Wait() && token.Error() != nil {
+		fmt.Println(token.Error())
+		os.Exit(1)
+	}
+	if token := client.Subscribe("nodeStatsResponse/#", 0, nil); token.Wait() && token.Error() != nil {
+		fmt.Println(token.Error())
+		os.Exit(1)
+	}
 }
 
 var connectLostHandler mqtt.ConnectionLostHandler = func(client mqtt.Client, err error) {
@@ -109,38 +130,110 @@ var connectLostHandler mqtt.ConnectionLostHandler = func(client mqtt.Client, err
 
 }
 var receiveMsgs mqtt.MessageHandler = func(client mqtt.Client, message mqtt.Message) {
-	var dataArray []string
+	var leaderTermPulse []string
+	var nodeElection []string
+	var nodeElectionResponse []string
+
 	var newTransaction models.Transaction
-	var responseString string
+	var leaderUser models.Users
+	var leaderCounty models.County
+	var leaderConstituency models.Constituency
+	var leaderWard models.Ward
+	var leaderPollingStation models.PollingStation
+	var leaderDesktopClient models.DesktopClient
+	var leaderCandidate models.Candidate
+	var leaderVoter models.Voter
+
 	var leaderTransactions []models.Transaction
 	var tallyResults map[string]int
 
-	err1 := json.Unmarshal(message.Payload(), &tallyResults)
-	// println("Map content: " + fmt.Sprintf("%+v", tallyResults))
+	var leaderAdminDashLogResponse []models.AdminDashLog
+	var msg models.Message
+	json.Unmarshal(message.Payload(), &msg)
 
-	if err1 != nil {
-		err2 := json.Unmarshal(message.Payload(), &newTransaction)
-		// println("Raft Log content: " + fmt.Sprintf("%+v", newTransaction))
-		if err2 != nil {
-			err3 := json.Unmarshal(message.Payload(), &responseString)
-			// println("Append Response: " + fmt.Sprintf("%+v", &responseString))
-			if err3 != nil {
-				err4 := json.Unmarshal(message.Payload(), &leaderTransactions)
-				if err4 != nil {
-					err5 := json.Unmarshal(message.Payload(), &dataArray)
-					if err5 != nil {
-						fmt.Println("Error unmarshalling as string,  string array, map or as transactions array:", err5)
-					}
-				}
-			}
-		}
+	switch msg.Type {
+	case "leader_term_pulse":
+		fmt.Println("type leader_term_pulse")
+		jsonBytes, _ := json.Marshal(msg.Payload)
+		json.Unmarshal(jsonBytes, &leaderTermPulse)
+
+	case "node_election":
+		fmt.Println("type node_election")
+		jsonBytes, _ := json.Marshal(msg.Payload)
+		json.Unmarshal(jsonBytes, &nodeElection)
+
+	case "node_election_response":
+		fmt.Println("type node_election_response")
+		jsonBytes, _ := json.Marshal(msg.Payload)
+		json.Unmarshal(jsonBytes, &nodeElectionResponse)
+
+	case "new_user":
+		fmt.Println("type new_user")
+		jsonBytes, _ := json.Marshal(msg.Payload)
+		json.Unmarshal(jsonBytes, &leaderUser)
+
+	case "new_county":
+		fmt.Println("type new_county")
+		jsonBytes, _ := json.Marshal(msg.Payload)
+		json.Unmarshal(jsonBytes, &leaderCounty)
+
+	case "new_constituency":
+		fmt.Println("type new_constituency")
+		jsonBytes, _ := json.Marshal(msg.Payload)
+		json.Unmarshal(jsonBytes, &leaderConstituency)
+
+	case "new_ward":
+		fmt.Println("type new_ward")
+		jsonBytes, _ := json.Marshal(msg.Payload)
+		json.Unmarshal(jsonBytes, &leaderWard)
+
+	case "new_polling_station":
+		fmt.Println("type new_polling_station")
+		jsonBytes, _ := json.Marshal(msg.Payload)
+		json.Unmarshal(jsonBytes, &leaderPollingStation)
+
+	case "new_desktop_client":
+		fmt.Println("type new_desktop_client")
+		jsonBytes, _ := json.Marshal(msg.Payload)
+		json.Unmarshal(jsonBytes, &leaderDesktopClient)
+
+	case "new_candidate":
+		fmt.Println("type new_candidate")
+		jsonBytes, _ := json.Marshal(msg.Payload)
+		json.Unmarshal(jsonBytes, &leaderCandidate)
+
+	case "new_voter":
+		fmt.Println("type new_voter")
+		jsonBytes, _ := json.Marshal(msg.Payload)
+		json.Unmarshal(jsonBytes, &leaderVoter)
+
+	case "new_transaction":
+		fmt.Println("type new_transaction")
+		jsonBytes, _ := json.Marshal(msg.Payload)
+		json.Unmarshal(jsonBytes, &newTransaction)
+
+	case "leader_log_response":
+		fmt.Println("type leader_log_response")
+		jsonBytes, _ := json.Marshal(msg.Payload)
+		json.Unmarshal(jsonBytes, &leaderTransactions)
+
+	case "tally_results":
+		fmt.Println("type tally_results")
+		jsonBytes, _ := json.Marshal(msg.Payload)
+		json.Unmarshal(jsonBytes, &tallyResults)
+
+	case "leader_admin_dash_log_response":
+		fmt.Println("type leader_admin_dash_log_response")
+		jsonBytes, _ := json.Marshal(msg.Payload)
+		json.Unmarshal(jsonBytes, &leaderAdminDashLogResponse)
 
 	}
+
 	fmt.Printf("TOPIC------> %s\n", message.Topic())
 	fmt.Printf("MESSAGE------> %s\n", string(message.Payload()))
 
-	if len(dataArray) > 0 {
-		if dataArray[1] == "Leader Alive" {
+	if len(leaderTermPulse) > 0 {
+		if leaderTermPulse[1] == "Leader Alive" {
 			println("-------------------->Leader Alive")
 
 			if utils.GetClientState() != "leader" {
@@ -158,58 +251,62 @@ var receiveMsgs mqtt.MessageHandler = func(client mqtt.Client, message mqtt.Mess
 
 	if string(message.Topic()) == "election/1" {
 		fmt.Println("Node:" + utils.ReadClientID() + " casting vote")
-		intVal, err2 := strconv.Atoi(dataArray[1])
+		candidateTerm, err2 := strconv.Atoi(nodeElection[1])
 		if err2 != nil {
 			panic(err2)
 		}
 
-		if utils.GetClientTerm() > intVal {
+		if utils.GetClientTerm() > candidateTerm {
 			fmt.Println("Node has a greater term than candidate")
 			utils.SetRaftState("candidate")
-			candidateNodeId := dataArray[0]
+			candidateNodeId := nodeElection[0]
 			var voterPayload []string
-			voterPayload = append(voterPayload, utils.ReadClientID(), candidateNodeId, strconv.Itoa(intVal), "higher term")
-			jsonData, err2 := json.Marshal(voterPayload)
-			if err2 != nil {
-				panic(err2)
+			voterPayload = append(voterPayload, utils.ReadClientID(), candidateNodeId, strconv.Itoa(candidateTerm), "higher term")
+
+			mqttMessage := models.Message{Type: "node_election_response", Payload: voterPayload}
+			data, err := json.Marshal(mqttMessage)
+			if err != nil {
+				panic(err)
 			}
-			token := client.Publish("nodeElectionResponse/1", 0, false, jsonData)
+			token := client.Publish("nodeElectionResponse/1", 0, false, data)
 			token.Wait()
 		}
 
 		//check if the node has already voted in this election term
 
-		if utils.GetClientVote()[1] != dataArray[1] {
-			fmt.Println("Node has not voted in this term" + " stored candidate: " + utils.GetClientVote()[0] + " election term " + dataArray[1])
+		if utils.GetClientVote()[1] != nodeElection[1] {
+			fmt.Println("Node has not voted in this term" + " stored candidate: " + utils.GetClientVote()[0] + " election term " + nodeElection[1])
 
 			if utils.GetClientState() == "candidate" {
 				println("Node voting for itself")
 				var voterPayload []string
-				voterPayload = append(voterPayload, utils.ReadClientID(), utils.ReadClientID(), strconv.Itoa(intVal), "yes")
-				jsonData, err2 := json.Marshal(voterPayload)
-				if err2 != nil {
-					panic(err2)
+				voterPayload = append(voterPayload, utils.ReadClientID(), utils.ReadClientID(), strconv.Itoa(candidateTerm), "yes")
+				mqttMessage := models.Message{Type: "node_election_response", Payload: voterPayload}
+				data, err := json.Marshal(mqttMessage)
+				if err != nil {
+					panic(err)
 				}
-				token := client.Publish("nodeElectionResponse/1", 0, false, jsonData)
+				token := client.Publish("nodeElectionResponse/1", 0, false, data)
 				token.Wait()
 
 				utils.SetVoteAndTerm(utils.ReadClientID(), voterPayload[2], "yes")
 			} else {
 				println("Node voting for another node")
-				candidateNodeId := dataArray[0]
+				candidateNodeId := nodeElection[0]
 				var voterPayload []string
-				voterPayload = append(voterPayload, utils.ReadClientID(), candidateNodeId, strconv.Itoa(intVal), "yes")
-				jsonData, err2 := json.Marshal(voterPayload)
-				if err2 != nil {
-					panic(err2)
+				voterPayload = append(voterPayload, utils.ReadClientID(), candidateNodeId, strconv.Itoa(candidateTerm), "yes")
+				mqttMessage := models.Message{Type: "node_election_response", Payload: voterPayload}
+				data, err := json.Marshal(mqttMessage)
+				if err != nil {
+					panic(err)
 				}
-				token := client.Publish("nodeElectionResponse/1", 0, false, jsonData)
+				token := client.Publish("nodeElectionResponse/1", 0, false, data)
 				token.Wait()
 
 				utils.SetVoteAndTerm(candidateNodeId, voterPayload[2], "yes")
 			}
 		} else {
-			fmt.Println("Node has alReady voted in this term" + " stored candidate: " + utils.GetClientVote()[0] + " election term" + dataArray[1])
+			fmt.Println("Node has alReady voted in this term" + " stored candidate: " + utils.GetClientVote()[0] + " election term" + nodeElection[1])
 		}
 
 	}
@@ -217,15 +314,16 @@ var receiveMsgs mqtt.MessageHandler = func(client mqtt.Client, message mqtt.Mess
 	if string(message.Topic()) == "nodeElectionResponse/1" {
 		fmt.Println("Node:" + utils.ReadClientID() + "vote response")
 
-		if utils.ReadClientID() == dataArray[1] {
-			if dataArray[3] == "higher term" {
+		if utils.ReadClientID() == nodeElectionResponse[1] {
+			if nodeElectionResponse[3] == "higher term" {
 				utils.SetRaftState("follower")
 			}
 
 			if len(MyVotes) < getTotalConnectedNodes() {
-				MyVotes = append(MyVotes, dataArray[1])
+				MyVotes = append(MyVotes, nodeElectionResponse[1])
 			}
 
+			//todo: change to half total nodes due to latency
 			if len(MyVotes) == getTotalConnectedNodes() {
 				utils.SetRaftState("leader")
 				go StartApiServer()
@@ -263,22 +361,35 @@ var receiveMsgs mqtt.MessageHandler = func(client mqtt.Client, message mqtt.Mess
 	}
 
 	if string(message.Topic()) == "leaderLogRequest/1" {
+		var transactions []models.Transaction
+
 		if utils.GetClientState() == "leader" {
+			if _, err := os.Stat("log.json"); errors.Is(err, os.ErrNotExist) {
+				//log.json doesn't exist,retur empty transactions
+				mqttMessage := models.Message{Type: "leader_log_response", Payload: transactions}
+				data, err := json.Marshal(mqttMessage)
+				if err != nil {
+					panic(err)
+				}
+				token := client.Publish("leaderLogResponse/1", 0, false, data)
+				token.Wait()
+				return
+			}
 			logFile, err := os.ReadFile("log.json")
 			if err != nil {
-				panic(err)
+				fmt.Println(err)
 			}
-			var transactions []models.Transaction
 
 			err2 := json.Unmarshal(logFile, &transactions)
 			if err2 != nil {
 				panic(err2)
 			}
-			jsonData, err3 := json.Marshal(transactions)
-			if err3 != nil {
-				panic(err3)
+			mqttMessage := models.Message{Type: "leader_log_response", Payload: transactions}
+			data, err := json.Marshal(mqttMessage)
+			if err != nil {
+				panic(err)
 			}
-			token := client.Publish("leaderLogResponse/1", 0, false, jsonData)
+			token := client.Publish("leaderLogResponse/1", 0, false, data)
 			token.Wait()
 
 		}
@@ -286,10 +397,16 @@ var receiveMsgs mqtt.MessageHandler = func(client mqtt.Client, message mqtt.Mess
 
 	if string(message.Topic()) == "leaderLogResponse/1" {
 		if utils.GetClientState() == "syncing" {
+			//check if leaderLog is empty
+			if len(leaderTransactions) == 0 {
+				fmt.Println("The leader has no transactions to sync yet")
+				SyncAdminDashLog()
+				return
+			}
 			//check if file exists
 			_, err := os.Stat("log.json")
 			if err != nil {
-				//if log file doesn't exist
+				//log file doesn't exist
 				for _, x := range leaderTransactions {
 					fmt.Println("Writing to db" + fmt.Sprintf("%+v", x))
 					database, err := gorm.Open(sqlite.Open("nodeDB.sql"), &gorm.Config{})
@@ -299,6 +416,7 @@ var receiveMsgs mqtt.MessageHandler = func(client mqtt.Client, message mqtt.Mess
 					//commit to log.json file
 					PersistLog(x)
 
+					//add a verificatinController
 					//verify the transactions...call  a vote verification function, return bool
 					//ensure that the txid is valid, and was generated by an official client app
 					//ensure that the node id is valid
@@ -309,38 +427,42 @@ var receiveMsgs mqtt.MessageHandler = func(client mqtt.Client, message mqtt.Mess
 					//insert verified transaction into db
 					database.Create(&x)
 				}
-			}
-			//if file exists, check if follower log entries match the leader nodes entries, if not append from the last matching value
-			syncingNodesLog, err := os.ReadFile("log.json")
-			if err != nil {
-				panic(err)
-			}
-			var followerTransactions []models.Transaction
+				SyncAdminDashLog()
 
-			err2 := json.Unmarshal(syncingNodesLog, &followerTransactions)
-			if err2 != nil {
-				panic(err2)
-			}
-			if len(followerTransactions) < len(leaderTransactions) {
-				fmt.Println("Mismatch, leader log length:" + strconv.Itoa(len(leaderTransactions)))
-				fmt.Println("Mismatch, follower log length:" + strconv.Itoa(len(followerTransactions)))
-
-				for i := len(followerTransactions); i < len(leaderTransactions); i++ {
-					PersistLog(leaderTransactions[i])
-				}
-			}
-			//as soon as the leader node file size matches the syncing node file size, set the raft state to follower,
-			// if it doesn't match call the nodeSync function recursively
-			//set state to follower once it is confirmed that the logs match
-
-			if len(followerTransactions) == len(leaderTransactions) {
-				utils.SetRaftState("follower")
-				fmt.Println("Logs match")
 			} else {
-				fmt.Println("leader log length:" + strconv.Itoa(len(leaderTransactions)))
-				fmt.Println("follower log length:" + strconv.Itoa(len(followerTransactions)))
+				//if file exists, check if follower log entries match the leadernodes entries, if not append from the last matching value
+				syncingNodesLog, err := os.ReadFile("log.json")
+				if err != nil {
+					panic(err)
+				}
+				var followerTransactions []models.Transaction
 
-				NodeSync()
+				err2 := json.Unmarshal(syncingNodesLog, &followerTransactions)
+				if err2 != nil {
+					panic(err2)
+				}
+				if len(followerTransactions) < len(leaderTransactions) {
+					fmt.Println("Mismatch, leaderlog length:" + strconv.Itoa(len(leaderTransactions)))
+					fmt.Println("Mismatch, follower log length:" + strconv.Itoa(len(followerTransactions)))
+
+					for i := len(followerTransactions); i < len(leaderTransactions); i++ {
+						PersistLog(leaderTransactions[i])
+					}
+				}
+				//as soon as the leadernode file size matches the syncing node file size, set the raft state to follower,
+				// if it doesn't match call the nodeSync function recursively
+				//set state to follower once it is confirmed that the logs match
+
+				if len(followerTransactions) == len(leaderTransactions) {
+					fmt.Println("Logs match")
+					SyncAdminDashLog()
+
+				} else {
+					fmt.Println("leaderlog length:" + strconv.Itoa(len(leaderTransactions)))
+					fmt.Println("follower log length:" + strconv.Itoa(len(followerTransactions)))
+
+					NodeSync()
+				}
 			}
 		}
 
@@ -354,6 +476,218 @@ var receiveMsgs mqtt.MessageHandler = func(client mqtt.Client, message mqtt.Mess
 		fmt.Println(tallyResults)
 		fmt.Println("pass tally")
 		FinalTally(tallyResults)
+	}
+	if string(message.Topic()) == "adminTransaction/1" {
+		if utils.GetClientState() == "follower" {
+
+			database, err := gorm.Open(sqlite.Open("nodeDB.sql"), &gorm.Config{})
+			if err != nil {
+				panic(err)
+			}
+			switch {
+			case !reflect.ValueOf(leaderUser).IsZero():
+				result := database.Create(&leaderUser)
+				if result.Error != nil {
+					panic(result.Error)
+				}
+			case !reflect.ValueOf(leaderCounty).IsZero():
+				result := database.Create(&leaderCounty)
+				if result.Error != nil {
+					panic(result.Error)
+				}
+			case reflect.ValueOf(leaderConstituency).IsZero():
+				result := database.Create(&leaderConstituency)
+				if result.Error != nil {
+					panic(result.Error)
+				}
+			case reflect.ValueOf(leaderWard).IsZero():
+				result := database.Create(&leaderWard)
+				if result.Error != nil {
+					panic(result.Error)
+				}
+			case reflect.ValueOf(leaderPollingStation).IsZero():
+				result := database.Create(&leaderPollingStation)
+				if result.Error != nil {
+					panic(result.Error)
+				}
+			case reflect.ValueOf(leaderDesktopClient).IsZero():
+				result := database.Create(&leaderDesktopClient)
+				if result.Error != nil {
+					panic(result.Error)
+				}
+			case reflect.ValueOf(leaderCandidate).IsZero():
+				result := database.Create(&leaderCandidate)
+				if result.Error != nil {
+					panic(result.Error)
+				}
+			case reflect.ValueOf(leaderVoter).IsZero():
+				result := database.Create(&leaderVoter)
+				if result.Error != nil {
+					panic(result.Error)
+				}
+			}
+		}
+	}
+	if string(message.Topic()) == "leaderAdminDashLogRequest/1" {
+		var admin_dash_log []models.AdminDashLog
+
+		if utils.GetClientState() == "leader" {
+			if _, err := os.Stat("admin_dash_log.json"); errors.Is(err, os.ErrNotExist) {
+				//log.json doesn't exist,retur empty transactions
+				mqttMessage := models.Message{Type: "leader_admin_dash_log_response", Payload: admin_dash_log}
+				data, err := json.Marshal(mqttMessage)
+				if err != nil {
+					panic(err)
+				}
+				token := client.Publish("leaderLogResponse/1", 0, false, data)
+				token.Wait()
+				return
+			}
+			logFile, err := os.ReadFile("admin_dash_log.json")
+			if err != nil {
+				fmt.Println(err)
+			}
+
+			err2 := json.Unmarshal(logFile, &admin_dash_log)
+			if err2 != nil {
+				panic(err2)
+			}
+			mqttMessage := models.Message{Type: "leader_admin_dash_log_response", Payload: admin_dash_log}
+			data, err := json.Marshal(mqttMessage)
+			if err != nil {
+				panic(err)
+			}
+			token := client.Publish("leaderAdminDashLogResponse/1", 0, false, data)
+			token.Wait()
+
+		}
+	}
+
+	if string(message.Topic()) == "leaderAdminDashLogResponse/1" {
+		if utils.GetClientState() == "syncing" {
+
+			//delete old log file
+			err := os.Remove("admin_dash_log.json")
+			if err != nil {
+				fmt.Println("dmin dash log ile doesn't exist")
+			}
+			database, err := gorm.Open(sqlite.Open("nodeDB.sql"), &gorm.Config{})
+			if err != nil {
+				panic(err)
+			}
+			for _, x := range leaderAdminDashLogResponse {
+				fmt.Println(x)
+				switch x.Type {
+				case "User":
+					var user_model models.Users
+					user, err := json.Marshal(x.Payload)
+					if err != nil {
+						panic(err)
+					}
+					json.Unmarshal(user, &user_model)
+					result := database.Create(&user_model)
+					if result.Error != nil {
+						fmt.Println(result.Error)
+					}
+					PersistAdminDashLog(x)
+
+				case "County":
+					var couny_model models.County
+					county, err := json.Marshal(x.Payload)
+					if err != nil {
+						panic(err)
+					}
+					json.Unmarshal(county, &couny_model)
+					result := database.Create(&couny_model)
+					if result.Error != nil {
+						fmt.Println(result.Error)
+					}
+					PersistAdminDashLog(x)
+
+				case "Constituency":
+					var constituency_model models.Constituency
+					constituency, err := json.Marshal(x.Payload)
+					if err != nil {
+						panic(err)
+					}
+					json.Unmarshal(constituency, &constituency_model)
+					result := database.Create(&constituency_model)
+					if result.Error != nil {
+						fmt.Println(result.Error)
+					}
+					PersistAdminDashLog(x)
+
+				case "Ward":
+					var ward_model models.Ward
+					ward, err := json.Marshal(x.Payload)
+					if err != nil {
+						panic(err)
+					}
+					json.Unmarshal(ward, &ward_model)
+					result := database.Create(&ward_model)
+					if result.Error != nil {
+						fmt.Println(result.Error)
+					}
+					PersistAdminDashLog(x)
+
+				case "PollingStation":
+					var polling_station_model models.PollingStation
+					polling_station, err := json.Marshal(x.Payload)
+					if err != nil {
+						panic(err)
+					}
+					json.Unmarshal(polling_station, &polling_station_model)
+					result := database.Create(&polling_station_model)
+					if result.Error != nil {
+						fmt.Println(result.Error)
+					}
+					PersistAdminDashLog(x)
+
+				case "DesktopClient":
+					var desktop_client_model models.DesktopClient
+					desktop_client, err := json.Marshal(x.Payload)
+					if err != nil {
+						panic(err)
+					}
+					json.Unmarshal(desktop_client, &desktop_client_model)
+					result := database.Create(&desktop_client_model)
+					if result.Error != nil {
+						fmt.Println(result.Error)
+					}
+					PersistAdminDashLog(x)
+
+				case "Candidate":
+					var candidate_model models.Candidate
+					candidate, err := json.Marshal(x.Payload)
+					if err != nil {
+						panic(err)
+					}
+					json.Unmarshal(candidate, &candidate_model)
+					result := database.Create(&candidate_model)
+					if result.Error != nil {
+						fmt.Println(result.Error)
+					}
+					PersistAdminDashLog(x)
+
+				case "Voter":
+					var voter_model models.Voter
+					voter, err := json.Marshal(x.Payload)
+					if err != nil {
+						panic(err)
+					}
+					json.Unmarshal(voter, &voter_model)
+					result := database.Create(&voter_model)
+					if result.Error != nil {
+						fmt.Println(result.Error)
+					}
+					PersistAdminDashLog(x)
+
+				}
+			}
+
+			//set raft state to follower
+			utils.SetRaftState("follower")
+		}
 	}
 }
 

@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"time"
 	"vote_backend/controller"
+	"vote_backend/models"
 	ui "vote_backend/ui"
 	"vote_backend/utils"
 
@@ -57,14 +58,15 @@ func main() {
 
 			myPayload := append(controller.LeaderPayload, val, "Leader Alive")
 
-			jsonData, err2 := json.Marshal(myPayload)
-			if err2 != nil {
-				panic(err2)
+			mqttMessage := models.Message{Type: "leader_term_pulse", Payload: myPayload}
+			data, err := json.Marshal(mqttMessage)
+			if err != nil {
+				panic(err)
 			}
 
 			time.Sleep(time.Duration(time.Second))
 			// publish a message every one second
-			token := controller.Client[0].Publish("leaderNodePulse/"+key, 0, false, jsonData)
+			token := controller.Client[0].Publish("leaderNodePulse/"+key, 0, false, data)
 			token.Wait()
 
 		}
@@ -120,11 +122,13 @@ func requestVotes() {
 
 	var candidatePayload []string
 	candidatePayload = append(candidatePayload, utils.ReadClientID(), strconv.Itoa(newTerm))
-	jsonData, err2 := json.Marshal(candidatePayload)
-	if err2 != nil {
-		panic(err2)
+
+	mqttMessage := models.Message{Type: "node_election", Payload: candidatePayload}
+	data, err := json.Marshal(mqttMessage)
+	if err != nil {
+		panic(err)
 	}
-	token := controller.Client[0].Publish("election/1", 0, false, jsonData)
+	token := controller.Client[0].Publish("election/1", 0, false, data)
 	token.Wait()
 }
 
@@ -159,10 +163,6 @@ func router() http.Handler {
 	httpFS := http.FileServer(http.FS(staticFS))
 	mux.Handle("/static/", httpFS)
 
-	// // api
-	// mux.HandleFunc("/new-vote", func(w http.ResponseWriter, r *http.Request) {
-	// 	controller.NewTransaction(&gin.Context{})
-	// })
 	return mux
 }
 

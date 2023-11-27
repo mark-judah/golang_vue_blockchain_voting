@@ -45,6 +45,16 @@ func NewCounty(context *gin.Context) {
 			context.IndentedJSON(http.StatusBadRequest, result.Error.Error())
 		} else {
 			context.IndentedJSON(http.StatusCreated, newCounty)
+			newAdminDashLog := models.AdminDashLog{Type: "County", Payload: newCounty}
+			PersistAdminDashLog(newAdminDashLog)
+
+			mqttMessage := models.Message{Type: "new_county", Payload: newCounty}
+			data, err := json.Marshal(mqttMessage)
+			if err != nil {
+				panic(err)
+			}
+			token := Client[0].Publish("adminTransaction/1", 0, false, data)
+			token.Wait()
 		}
 	}
 }
@@ -96,6 +106,15 @@ func NewConstituency(context *gin.Context) {
 			context.IndentedJSON(http.StatusBadRequest, result.Error.Error())
 		} else {
 			context.IndentedJSON(http.StatusCreated, newConstituency)
+			newAdminDashLog := models.AdminDashLog{Type: "Constituency", Payload: newConstituency}
+			PersistAdminDashLog(newAdminDashLog)
+			mqttMessage := models.Message{Type: "new_constituency", Payload: newConstituency}
+			data, err := json.Marshal(mqttMessage)
+			if err != nil {
+				panic(err)
+			}
+			token := Client[0].Publish("adminTransaction/1", 0, false, data)
+			token.Wait()
 		}
 	}
 }
@@ -147,6 +166,15 @@ func NewWard(context *gin.Context) {
 			context.IndentedJSON(http.StatusBadRequest, result.Error.Error())
 		} else {
 			context.IndentedJSON(http.StatusCreated, newWard)
+			newAdminDashLog := models.AdminDashLog{Type: "Ward", Payload: newWard}
+			PersistAdminDashLog(newAdminDashLog)
+			mqttMessage := models.Message{Type: "new_ward", Payload: newWard}
+			data, err := json.Marshal(mqttMessage)
+			if err != nil {
+				panic(err)
+			}
+			token := Client[0].Publish("adminTransaction/1", 0, false, data)
+			token.Wait()
 		}
 	}
 }
@@ -198,6 +226,15 @@ func NewPollingStation(context *gin.Context) {
 			context.IndentedJSON(http.StatusBadRequest, result.Error.Error())
 		} else {
 			context.IndentedJSON(http.StatusCreated, newPollingStation)
+			newAdminDashLog := models.AdminDashLog{Type: "PollingStation", Payload: newPollingStation}
+			PersistAdminDashLog(newAdminDashLog)
+			mqttMessage := models.Message{Type: "new_polling_station", Payload: newPollingStation}
+			data, err := json.Marshal(mqttMessage)
+			if err != nil {
+				panic(err)
+			}
+			token := Client[0].Publish("adminTransaction/1", 0, false, data)
+			token.Wait()
 		}
 	}
 }
@@ -249,6 +286,15 @@ func NewDesktopClient(context *gin.Context) {
 			context.IndentedJSON(http.StatusBadRequest, result.Error.Error())
 		} else {
 			context.IndentedJSON(http.StatusCreated, newDesktopClient)
+			newAdminDashLog := models.AdminDashLog{Type: "DesktopClient", Payload: newDesktopClient}
+			PersistAdminDashLog(newAdminDashLog)
+			mqttMessage := models.Message{Type: "new_desktop_client", Payload: newDesktopClient}
+			data, err := json.Marshal(mqttMessage)
+			if err != nil {
+				panic(err)
+			}
+			token := Client[0].Publish("adminTransaction/1", 0, false, data)
+			token.Wait()
 		}
 	}
 }
@@ -300,6 +346,15 @@ func NewCandidate(context *gin.Context) {
 			context.IndentedJSON(http.StatusBadRequest, result.Error.Error())
 		} else {
 			context.IndentedJSON(http.StatusCreated, newCandidate)
+			newAdminDashLog := models.AdminDashLog{Type: "Candidate", Payload: newCandidate}
+			PersistAdminDashLog(newAdminDashLog)
+			mqttMessage := models.Message{Type: "new_candidate", Payload: newCandidate}
+			data, err := json.Marshal(mqttMessage)
+			if err != nil {
+				panic(err)
+			}
+			token := Client[0].Publish("adminTransaction/1", 0, false, data)
+			token.Wait()
 		}
 	}
 }
@@ -359,6 +414,15 @@ func NewVoter(context *gin.Context) {
 			context.IndentedJSON(http.StatusBadRequest, result.Error.Error())
 		} else {
 			context.IndentedJSON(http.StatusCreated, newVoter)
+			newAdminDashLog := models.AdminDashLog{Type: "Voter", Payload: newVoter}
+			PersistAdminDashLog(newAdminDashLog)
+			mqttMessage := models.Message{Type: "new_voter", Payload: newVoter}
+			data, err := json.Marshal(mqttMessage)
+			if err != nil {
+				panic(err)
+			}
+			token := Client[0].Publish("adminTransaction/1", 0, false, data)
+			token.Wait()
 		}
 	}
 }
@@ -381,4 +445,9 @@ func FetchVoters(context *gin.Context) {
 }
 
 func FetchTransactionPool(context *gin.Context) {
+}
+
+func FetchConnectedNodes(context *gin.Context) {
+	token := Client[0].Publish("nodeStatsRequest/1", 0, false, "get node stats")
+	token.Wait()
 }

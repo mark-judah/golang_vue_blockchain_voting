@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import LoginView from '../views/LoginView.vue'
-import AdminView from '../views/AdminView.vue'
+import AdminHome from '../views/AdminHome.vue'
 import Users from '../views/AllUsers.vue'
 import Counties from '../views/AllCounties.vue'
 import Constituencies from '../views/AllConstituencies.vue'
@@ -10,6 +10,7 @@ import Candidates from '../views/AllCandidates.vue'
 import Voters from '../views/AllVoters.vue'
 import DesktopClients from '../views/DesktopClients.vue'
 import TransactionPool from '../views/TransactionPool.vue'
+import ConnectedNodes from '../views/ConnectedNodes.vue'
 
 const routes = [
   {
@@ -20,7 +21,7 @@ const routes = [
   {
     path: '/admin',
     name: 'admin',
-    component: AdminView
+    component: AdminHome
   },
   {
     path: '/users',
@@ -60,6 +61,10 @@ const routes = [
     path: '/transaction-pool',
     name: 'transaction-pool',
     component: TransactionPool
+  }, {
+    path: '/connected-nodes',
+    name: 'connected-nodes',
+    component: ConnectedNodes
   },
   {
     path: '/:pathMatch(.*)*',

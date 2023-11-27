@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -68,6 +69,15 @@ func CreateUser(context *gin.Context) {
 			context.IndentedJSON(http.StatusBadRequest, result.Error.Error())
 		} else {
 			context.IndentedJSON(http.StatusCreated, newUser)
+			newAdminLog := models.AdminDashLog{Type: "User", Payload: newUser}
+			PersistAdminDashLog(newAdminLog)
+			mqttMessage := models.Message{Type: "new_user", Payload: newUser}
+			data, err := json.Marshal(mqttMessage)
+			if err != nil {
+				panic(err)
+			}
+			token := Client[0].Publish("adminTransaction/1", 0, false, data)
+			token.Wait()
 		}
 
 	}

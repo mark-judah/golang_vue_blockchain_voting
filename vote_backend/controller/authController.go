@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
 )
 
@@ -70,4 +71,8 @@ func GetCurrentUser(signedToken string) (email string) {
 	}
 	fmt.Println("email", claims.Email)
 	return claims.Email
+}
+
+func CheckAuth(context *gin.Context) {
+	//if 401 is returned, the middleware cauth the expired token. LOgout and delete token on the fronend.
 }
