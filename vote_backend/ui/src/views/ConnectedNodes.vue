@@ -3,8 +3,8 @@
         <div class="ml-96 mr-12 mt-32 flex justify-start  bg-[#ffffff] h-full">
 
             <div class="p-12 flex justify-center">
-                <table class="table-auto  text-gray-400-separate space-y-6 text-sm">
-                    <thead class="text-xs text-gray-700">
+                <table class="table-auto space-y-6">
+                    <thead class="">
 
                         <tr class="rounded-3xl">
                             <th class="px-1.5 py-2 border">Index</th>
@@ -16,15 +16,14 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <!-- <tr v-for="(tree,index) in this.familyData" :key="index" class="bg-white border-b dark:bg-gray-900 dark:border-gray-700"> -->
-
-                            <td class="px-1.5 py-2  font-bold border text-xs text-gray-700"> </td>
-                            <td class="px-1.5 py-2  font-bold border text-xs text-gray-700"> </td>
-                            <td class="px-1.5 py-2  font-bold border text-xs text-gray-700"> </td>
-                            <td class="px-1.5 py-2  font-bold border text-xs text-gray-700"> </td>
-                            <td class="px-1.5 py-2  font-bold border text-xs text-gray-700"> </td>
-                            <td class="px-1.5 py-2  font-bold border text-xs text-gray-700"> </td>
+                        <tr v-for="(stats, index) in this.nodeStats" :key="index"
+                            class="bg-white border-b">
+                            <td class="px-1.5 py-2   border ">{{ index+1 }} </td>
+                            <td class="px-1.5 py-2   border ">{{ stats.NodeId }}</td>
+                            <td class="px-1.5 py-2   border ">{{ stats.Status }}</td>
+                            <td class="px-1.5 py-2   border ">{{ stats.Term }}</td>
+                            <td class="px-1.5 py-2   border ">{{ stats.LogLength }}</td>
+                            <td class="px-1.5 py-2   border ">Kill|Restart|Login</td>
 
                         </tr>
                     </tbody>
@@ -35,7 +34,35 @@
 </template>
 
 <script>
+import axios from 'axios'
+import SecureLS from 'secure-ls'
 
+export default {
+
+  data () {
+    this.getNodeStats()
+    return {
+      nodeStats: {}
+
+    }
+  },
+
+  methods: {
+    getNodeStats () {
+      const ls = new SecureLS()
+      const config = {
+        headers: { Authorization: `Bearer ${ls.get('user').token}` }
+      }
+      axios.get(
+        'http://127.0.0.1:3500/api/secured/get-connected-nodes', config
+      ).then((response) => {
+        console.log(response.data)
+        this.nodeStats = response.data
+      })
+    }
+  }
+
+}
 </script>
 
 <style scoped></style>

@@ -148,6 +148,9 @@ var receiveMsgs mqtt.MessageHandler = func(client mqtt.Client, message mqtt.Mess
 	var tallyResults map[string]int
 
 	var leaderAdminDashLogResponse []models.AdminDashLog
+
+	var newNodeStats models.NodeStats
+
 	var msg models.Message
 	json.Unmarshal(message.Payload(), &msg)
 
@@ -227,6 +230,10 @@ var receiveMsgs mqtt.MessageHandler = func(client mqtt.Client, message mqtt.Mess
 		jsonBytes, _ := json.Marshal(msg.Payload)
 		json.Unmarshal(jsonBytes, &leaderAdminDashLogResponse)
 
+	case "node_stats_response":
+		fmt.Println("type node_stats_response")
+		jsonBytes, _ := json.Marshal(msg.Payload)
+		json.Unmarshal(jsonBytes, &newNodeStats)
 	}
 
 	fmt.Printf("TOPIC------> %s\n", message.Topic())
@@ -689,6 +696,36 @@ var receiveMsgs mqtt.MessageHandler = func(client mqtt.Client, message mqtt.Mess
 			utils.SetRaftState("follower")
 		}
 	}
+
+	if string(message.Topic()) == "nodeStatsRequest/1" {
+		var nodesTransactions []models.Transaction
+		var logFileLength int
+		logFile, err := os.ReadFile("log.json")
+		if err != nil {
+			fmt.Println("No log file yet")
+			logFileLength = 0
+		} else {
+			err2 := json.Unmarshal(logFile, &nodesTransactions)
+			if err2 != nil {
+				panic(err2)
+			}
+			logFileLength = len(nodesTransactions)
+		}
+
+		node_stats := models.NodeStats{NodeId: utils.ReadClientID(), Status: utils.GetClientState(), Term: utils.GetClientTerm(), LogLength: logFileLength}
+		mqttMessage := models.Message{Type: "node_stats_response", Payload: node_stats}
+		data, err := json.Marshal(mqttMessage)
+		if err != nil {
+			panic(err)
+		}
+		token := Client[0].Publish("nodeStatsResponse/1", 0, false, data)
+		token.Wait()
+	}
+
+	if string(message.Topic()) == "nodeStatsResponse/1" {
+		NodeStats = append(NodeStats, newNodeStats)
+	}
+
 }
 
 func getTotalConnectedNodes() int {

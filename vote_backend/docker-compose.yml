@@ -1,7 +1,7 @@
 version: '3'
 
 services:
-  vote_backend-service-node2:
+  vote_backend-service-node1:
     network_mode: host
     build:
       context: .

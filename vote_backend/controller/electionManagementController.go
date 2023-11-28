@@ -13,7 +13,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
+
+var NodeStats []models.NodeStats
 
 func NewCounty(context *gin.Context) {
 	var newCounty models.County
@@ -40,7 +43,7 @@ func NewCounty(context *gin.Context) {
 		context.IndentedJSON(401, "You are not authorized to perform this action")
 		return
 	} else {
-		result := database.Create(&newCounty)
+		result := database.Omit(clause.Associations).Create(&newCounty)
 		if result.Error != nil {
 			context.IndentedJSON(http.StatusBadRequest, result.Error.Error())
 		} else {
@@ -120,19 +123,19 @@ func NewConstituency(context *gin.Context) {
 }
 
 func FetchConstituencies(context *gin.Context) {
-	allConstituencies := []models.Constituency{}
+	county := []models.County{}
 	database, err := gorm.Open(sqlite.Open("nodeDB.sql"), &gorm.Config{})
 
 	if err != nil {
 		context.IndentedJSON(http.StatusBadRequest, err)
 
 	} else {
-		if err := database.Find(&allConstituencies).Error; err != nil {
+		if err := database.Preload("Constituency").Find(&county).Error; err != nil {
 			log.Fatalln(err)
 		}
-		log.Printf("%d rows found.", len(allConstituencies))
+		log.Printf("%d rows found.", len(county))
 
-		context.IndentedJSON(http.StatusOK, allConstituencies)
+		context.IndentedJSON(http.StatusOK, county)
 	}
 }
 
@@ -180,19 +183,19 @@ func NewWard(context *gin.Context) {
 }
 
 func FetchWards(context *gin.Context) {
-	allWards := []models.Ward{}
+	county := []models.County{}
 	database, err := gorm.Open(sqlite.Open("nodeDB.sql"), &gorm.Config{})
 
 	if err != nil {
 		context.IndentedJSON(http.StatusBadRequest, err)
 
 	} else {
-		if err := database.Find(&allWards).Error; err != nil {
+		if err := database.Preload("Constituency.Ward").Find(&county).Error; err != nil {
 			log.Fatalln(err)
 		}
-		log.Printf("%d rows found.", len(allWards))
+		log.Printf("%d rows found.", len(county))
 
-		context.IndentedJSON(http.StatusOK, allWards)
+		context.IndentedJSON(http.StatusOK, county)
 	}
 }
 
@@ -240,19 +243,19 @@ func NewPollingStation(context *gin.Context) {
 }
 
 func FetchPollingStations(context *gin.Context) {
-	allPollingStations := []models.PollingStation{}
+	county := []models.County{}
 	database, err := gorm.Open(sqlite.Open("nodeDB.sql"), &gorm.Config{})
 
 	if err != nil {
 		context.IndentedJSON(http.StatusBadRequest, err)
 
 	} else {
-		if err := database.Find(&allPollingStations).Error; err != nil {
+		if err := database.Preload("Constituency.Ward.PollingStation").Find(&county).Error; err != nil {
 			log.Fatalln(err)
 		}
-		log.Printf("%d rows found.", len(allPollingStations))
+		log.Printf("%d rows found.", len(county))
 
-		context.IndentedJSON(http.StatusOK, allPollingStations)
+		context.IndentedJSON(http.StatusOK, county)
 	}
 }
 
@@ -300,19 +303,19 @@ func NewDesktopClient(context *gin.Context) {
 }
 
 func FetchDesktopClients(context *gin.Context) {
-	allDesktopClients := []models.DesktopClient{}
+	county := []models.County{}
 	database, err := gorm.Open(sqlite.Open("nodeDB.sql"), &gorm.Config{})
 
 	if err != nil {
 		context.IndentedJSON(http.StatusBadRequest, err)
 
 	} else {
-		if err := database.Find(&allDesktopClients).Error; err != nil {
+		if err := database.Preload("Constituency.Ward.PollingStation.DesktopClient").Find(&county).Error; err != nil {
 			log.Fatalln(err)
 		}
-		log.Printf("%d rows found.", len(allDesktopClients))
+		log.Printf("%d rows found.", len(county))
 
-		context.IndentedJSON(http.StatusOK, allDesktopClients)
+		context.IndentedJSON(http.StatusOK, county)
 	}
 }
 
@@ -360,19 +363,19 @@ func NewCandidate(context *gin.Context) {
 }
 
 func FetchCandidates(context *gin.Context) {
-	allCandidates := []models.Candidate{}
+	county := []models.County{}
 	database, err := gorm.Open(sqlite.Open("nodeDB.sql"), &gorm.Config{})
 
 	if err != nil {
 		context.IndentedJSON(http.StatusBadRequest, err)
 
 	} else {
-		if err := database.Find(&allCandidates).Error; err != nil {
+		if err := database.Preload("Constituency.Ward.PollingStation.Candidate").Find(&county).Error; err != nil {
 			log.Fatalln(err)
 		}
-		log.Printf("%d rows found.", len(allCandidates))
+		log.Printf("%d rows found.", len(county))
 
-		context.IndentedJSON(http.StatusOK, allCandidates)
+		context.IndentedJSON(http.StatusOK, county)
 	}
 }
 
@@ -428,19 +431,19 @@ func NewVoter(context *gin.Context) {
 }
 
 func FetchVoters(context *gin.Context) {
-	allVoters := []models.Voter{}
+	county := []models.County{}
 	database, err := gorm.Open(sqlite.Open("nodeDB.sql"), &gorm.Config{})
 
 	if err != nil {
 		context.IndentedJSON(http.StatusBadRequest, err)
 
 	} else {
-		if err := database.Find(&allVoters).Error; err != nil {
+		if err := database.Preload("Constituency.Ward.PollingStation.Voter").Find(&county).Error; err != nil {
 			log.Fatalln(err)
 		}
-		log.Printf("%d rows found.", len(allVoters))
+		log.Printf("%d rows found.", len(county))
 
-		context.IndentedJSON(http.StatusOK, allVoters)
+		context.IndentedJSON(http.StatusOK, county)
 	}
 }
 
@@ -450,4 +453,14 @@ func FetchTransactionPool(context *gin.Context) {
 func FetchConnectedNodes(context *gin.Context) {
 	token := Client[0].Publish("nodeStatsRequest/1", 0, false, "get node stats")
 	token.Wait()
+
+	for {
+		if len(NodeStats) < getTotalConnectedNodes() {
+			fmt.Println("fetching node stats....")
+		} else {
+			context.IndentedJSON(http.StatusOK, NodeStats)
+			NodeStats = nil
+			break
+		}
+	}
 }

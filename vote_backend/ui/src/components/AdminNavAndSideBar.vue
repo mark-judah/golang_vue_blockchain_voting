@@ -72,7 +72,7 @@
             aria-label="Sidebar">
             <div class="h-full pb-4 overflow-y-auto bg-[#4D4D4D]">
                 <ul class="mt-7">
-                    <li class="bg-[#1E1E1E] w-full">
+                    <li>
                         <router-link :to="{ name: 'admin' }"
                             class="flex items-center p-2 text-base font-normal text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
                             <img src="../assets/images/home.svg" class="w-6 h-8">
@@ -80,7 +80,7 @@
                         </router-link>
                     </li>
 
-                    <li>
+                    <li class="bg-[#1E1E1E] w-full">
                         <router-link :to="{ name: 'counties' }"
                             class="flex items-center p-2 text-base font-normal text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
                             <img src="../assets/images/county.svg" class="w-6 h-8">
@@ -88,7 +88,7 @@
                         </router-link>
                     </li>
 
-                    <li class="bg-[#1E1E1E]">
+                    <li>
                         <router-link :to="{ name: 'constituencies' }"
                             class="flex items-center p-2 text-base font-normal text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
                             <img src="../assets/images/parliament.svg" class="w-6 h-8">
@@ -97,7 +97,7 @@
 
                     </li>
 
-                    <li>
+                    <li class="bg-[#1E1E1E] w-full">
                         <router-link :to="{ name: 'wards' }"
                             class="flex items-center p-2 text-base font-normal text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
                             <img src="../assets/images/ward.svg" class="w-6 h-8">
@@ -105,7 +105,7 @@
                         </router-link>
                     </li>
 
-                    <li class="bg-[#1E1E1E]">
+                    <li>
                         <router-link :to="{ name: 'polling-stations' }"
                             class="flex items-center p-2 text-base font-normal text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
                             <img src="../assets/images/queue.svg" class="w-6 h-8">
@@ -113,7 +113,7 @@
                         </router-link>
                     </li>
 
-                    <li>
+                    <li class="bg-[#1E1E1E] w-full">
                         <router-link :to="{ name: 'candidates' }"
                             class="flex items-center p-2 text-base font-normal text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
                             <img src="../assets/images/candidates.svg" class="w-6 h-8">
@@ -121,14 +121,15 @@
                         </router-link>
                     </li>
 
-                    <li class="bg-[#1E1E1E]">
+                    <li>
                         <router-link :to="{ name: 'voters' }"
                             class="flex items-center p-2 text-base font-normal text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
                             <img src="../assets/images/voters.svg" class="w-6 h-8">
                             <span class="flex-1 ml-3 whitespace-nowrap">Voters</span>
                         </router-link>
                     </li>
-                    <li>
+
+                    <li class="bg-[#1E1E1E] w-full">
                         <router-link :to="{ name: 'desktop-clients' }"
                             class="flex items-center p-2 text-base font-normal text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
                             <img src="../assets/images/desktop_clients.svg" class="w-6 h-8">
@@ -136,7 +137,7 @@
                         </router-link>
                     </li>
 
-                    <li class="bg-[#1E1E1E]">
+                    <li>
                         <router-link :to="{ name: 'transaction-pool' }"
                             class="flex items-center p-2 text-base font-normal text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
                             <img src="../assets/images/transactions.svg" class="w-6 h-8">
@@ -144,7 +145,7 @@
                         </router-link>
                     </li>
 
-                    <li>
+                    <li class="bg-[#1E1E1E] w-full">
                         <router-link :to="{ name: 'connected-nodes' }"
                             class="flex items-center p-2 text-base font-normal text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
                             <img src="../assets/images/node.svg" class="w-6 h-8">
