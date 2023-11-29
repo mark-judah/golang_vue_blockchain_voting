@@ -27,7 +27,7 @@ func StartApiServer() {
 	api := router.Group("/api")
 	{
 		api.POST("/new-vote", NewTransaction)
-		api.POST("/tally-votes", Tally)
+		api.GET("/tally-votes", Tally)
 		api.POST("/login", Login)
 
 		securedRoutes := api.Group("/secured").Use(Auth())
@@ -51,6 +51,7 @@ func StartApiServer() {
 			securedRoutes.GET("/get-all-voters", FetchVoters)
 			securedRoutes.POST("/new-voter", NewVoter)
 			securedRoutes.GET("/get-connected-nodes", FetchConnectedNodes)
+			securedRoutes.GET("/get-quick-stats", FetchQuickStats)
 
 		}
 	}

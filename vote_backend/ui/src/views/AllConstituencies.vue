@@ -13,17 +13,12 @@
                             <th class="px-1.5 py-2 border">Action</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr v-for="(constituency, index) in this.allConstituencies" :key="index"
-                            class="bg-white border-b">
-                            <td class="px-1.5 py-2   border ">{{ index+1 }} </td>
-                            <td class="px-1.5 py-2   border ">{{ constituency.name }}</td>
-                            <td class="px-1.5 py-2   border ">{{ constituency.county }}</td>
-
+                    <tr v-for="(data, i) in this.allConstituencies"  :key="data" class="bg-white border-b">
+                            <td class="px-1.5 py-2   border ">{{++i }}</td>
+                            <td class="px-1.5 py-2   border ">{{ data.Constituency }}</td>
+                            <td class="px-1.5 py-2   border "  >{{ data.County   }}</td>
                             <td class="px-1.5 py-2   border ">Edit|Delete</td>
-
                         </tr>
-                    </tbody>
                 </table>
             </div>
         </div>
@@ -55,6 +50,13 @@ export default {
       ).then((response) => {
         console.log(response.data)
         this.allConstituencies = response.data
+      }).catch(function (error) {
+        if (error.response.status === 401) {
+          ls.removeAll()
+          window.location.href = '/'
+        } if (error.toJSON().message === 'Network Error') {
+          alert('no internet connection')
+        }
       })
     }
   }

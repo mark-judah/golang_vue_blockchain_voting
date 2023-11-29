@@ -52,6 +52,13 @@ export default {
       ).then((response) => {
         console.log(response.data)
         this.allCounties = response.data
+      }).catch(function (error) {
+        if (error.response.status === 401) {
+          ls.removeAll()
+          window.location.href = '/'
+        } if (error.toJSON().message === 'Network Error') {
+          alert('no internet connection')
+        }
       })
     }
   }

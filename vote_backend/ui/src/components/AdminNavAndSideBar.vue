@@ -188,6 +188,8 @@ export default {
         if (error.response.status === 401) {
           ls.removeAll()
           window.location.href = '/'
+        } if (error.toJSON().message === 'Network Error') {
+          alert('no internet connection')
         }
       })
     },

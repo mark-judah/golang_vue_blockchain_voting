@@ -1,16 +1,34 @@
 <template>
-    <div class="">
-        <div class="ml-96 mr-12 mt-32 flex justify-end  bg-[#ffffff] h-full">
+    <div>
+        <div class="ml-96 mr-12 mt-16 h-full">
+            <AdminQuickStats></AdminQuickStats>
+            <div class="flex justify-evenly justify-items-center mx-24">
+                <div>
+                    <AdminPresidenialResults></AdminPresidenialResults>
+                </div>
 
-            <div class="p-12 flex justify-center">
-
+                <div>
+                    <AdminResultsPerCounty></AdminResultsPerCounty>
+                </div>
             </div>
+
         </div>
     </div>
 </template>
 
+<style scoped></style>
+
 <script>
 
-</script>
+import AdminQuickStats from '../components/AdminQuickStats.vue'
+import AdminPresidenialResults from '../components/AdminPresidentialResults.vue'
+import AdminResultsPerCounty from '../components/AdminResultsPerCounty.vue'
 
-<style scoped></style>
+export default {
+  components: {
+    AdminQuickStats,
+    AdminPresidenialResults,
+    AdminResultsPerCounty
+  }
+}
+</script>

@@ -3,19 +3,15 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/fs"
 	"math/rand"
-	"net/http"
+	"net"
 	"os"
 	"os/exec"
 	"strconv"
 	"time"
 	"vote_backend/controller"
 	"vote_backend/models"
-	ui "vote_backend/ui"
 	"vote_backend/utils"
-
-	"github.com/gin-gonic/gin"
 )
 
 func main() {
@@ -133,37 +129,29 @@ func requestVotes() {
 }
 
 func startHttpServer() {
-	srv := &http.Server{
-		Addr:    ":8080",
-		Handler: router(),
+	for port := 8080; port <= 9080; port++ {
+		ln, err := net.Listen("tcp", ":"+strconv.Itoa(port))
+
+		if err != nil {
+			fmt.Println("Port in use:", err)
+		} else {
+			_ = ln.Close()
+			fmt.Println("Open port at: " + strconv.Itoa(port))
+
+			cmd := exec.Command("npm", "run", "serve", "--", "--port", strconv.Itoa(port))
+			cmd.Dir = "ui"
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stderr
+			err := cmd.Start()
+			if err != nil {
+				fmt.Printf("%s", err)
+			} else {
+				utils.SetHttpPort(strconv.Itoa(port))
+			}
+			break
+		}
 	}
-	cmd := exec.Command("npm", "run", "serve")
-	cmd.Dir = "ui"
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	err := cmd.Start()
-	if err != nil {
-		fmt.Printf("%s", err)
-		fmt.Println("Command Successfully Executed")
-		srv.ListenAndServe()
-	}
 
-}
-
-func router() http.Handler {
-	mux := http.NewServeMux()
-
-	// index page
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		controller.Index(&gin.Context{})
-	})
-
-	// static files
-	staticFS, _ := fs.Sub(ui.Static, "public")
-	httpFS := http.FileServer(http.FS(staticFS))
-	mux.Handle("/static/", httpFS)
-
-	return mux
 }
 
 func killApiServer() {

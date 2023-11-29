@@ -78,6 +78,16 @@ func GetClientVote() []string {
 	return dataArray
 }
 
+func GetClientPort() string {
+	key := ReadClientID() + "port"
+	port, err := RedisClient.Get(Ctx, key).Result()
+	if err != nil {
+		panic(err)
+	}
+
+	return port
+}
+
 func SetRaftTerm(term int) {
 	err := RedisClient.Set(Ctx, ReadClientID()+"term", term, 0).Err()
 	if err != nil {
@@ -124,5 +134,20 @@ func SetVoteAndTerm(candidateNodeId string, term string, vote string) {
 			panic(err)
 		}
 		fmt.Println("Stored vote", val)
+	}
+}
+
+func SetHttpPort(port string) {
+	fmt.Println("Saving port " + port + " to redis")
+	err := RedisClient.Set(Ctx, ReadClientID()+"port", port, 0).Err()
+	if err != nil {
+		panic(err)
+	} else {
+		key := ReadClientID() + "port"
+		val, err := RedisClient.Get(Ctx, key).Result()
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println("Port", val)
 	}
 }

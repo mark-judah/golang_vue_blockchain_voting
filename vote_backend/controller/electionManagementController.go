@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 	"vote_backend/models"
 
@@ -135,7 +136,18 @@ func FetchConstituencies(context *gin.Context) {
 		}
 		log.Printf("%d rows found.", len(county))
 
-		context.IndentedJSON(http.StatusOK, county)
+		type data struct {
+			County       string
+			Constituency string
+		}
+		var constituencies []data
+
+		for _, a := range county {
+			for _, b := range a.Constituency {
+				constituencies = append(constituencies, data{County: a.Name, Constituency: b.Name})
+			}
+		}
+		context.IndentedJSON(http.StatusOK, constituencies)
 	}
 }
 
@@ -194,8 +206,21 @@ func FetchWards(context *gin.Context) {
 			log.Fatalln(err)
 		}
 		log.Printf("%d rows found.", len(county))
+		type data struct {
+			County       string
+			Constituency string
+			Ward         string
+		}
+		var wards []data
 
-		context.IndentedJSON(http.StatusOK, county)
+		for _, a := range county {
+			for _, b := range a.Constituency {
+				for _, c := range b.Ward {
+					wards = append(wards, data{County: a.Name, Constituency: b.Name, Ward: c.Name})
+				}
+			}
+		}
+		context.IndentedJSON(http.StatusOK, wards)
 	}
 }
 
@@ -255,7 +280,24 @@ func FetchPollingStations(context *gin.Context) {
 		}
 		log.Printf("%d rows found.", len(county))
 
-		context.IndentedJSON(http.StatusOK, county)
+		type data struct {
+			County         string
+			Constituency   string
+			Ward           string
+			PollingStation string
+		}
+		var polling_stations []data
+
+		for _, a := range county {
+			for _, b := range a.Constituency {
+				for _, c := range b.Ward {
+					for _, d := range c.PollingStation {
+						polling_stations = append(polling_stations, data{County: a.Name, Constituency: b.Name, Ward: c.Name, PollingStation: d.Name})
+					}
+				}
+			}
+		}
+		context.IndentedJSON(http.StatusOK, polling_stations)
 	}
 }
 
@@ -315,7 +357,29 @@ func FetchDesktopClients(context *gin.Context) {
 		}
 		log.Printf("%d rows found.", len(county))
 
-		context.IndentedJSON(http.StatusOK, county)
+		type data struct {
+			County         string
+			Constituency   string
+			Ward           string
+			PollingStation string
+			Name           string
+			SerialNumber   string
+			MacAddress     string
+		}
+		var desktop_clients []data
+
+		for _, a := range county {
+			for _, b := range a.Constituency {
+				for _, c := range b.Ward {
+					for _, d := range c.PollingStation {
+						for _, e := range d.DesktopClient {
+							desktop_clients = append(desktop_clients, data{County: a.Name, Constituency: b.Name, Ward: c.Name, PollingStation: d.Name, Name: e.Name, SerialNumber: e.SerialNumber, MacAddress: e.MacAddress})
+						}
+					}
+				}
+			}
+		}
+		context.IndentedJSON(http.StatusOK, desktop_clients)
 	}
 }
 
@@ -375,7 +439,29 @@ func FetchCandidates(context *gin.Context) {
 		}
 		log.Printf("%d rows found.", len(county))
 
-		context.IndentedJSON(http.StatusOK, county)
+		type data struct {
+			County         string
+			Constituency   string
+			Ward           string
+			PollingStation string
+			Candidate      string
+			Position       string
+			Party          string
+		}
+		var candidates []data
+
+		for _, a := range county {
+			for _, b := range a.Constituency {
+				for _, c := range b.Ward {
+					for _, d := range c.PollingStation {
+						for _, e := range d.Candidate {
+							candidates = append(candidates, data{County: a.Name, Constituency: b.Name, Ward: c.Name, PollingStation: d.Name, Candidate: e.Name, Position: e.Position, Party: e.Party})
+						}
+					}
+				}
+			}
+		}
+		context.IndentedJSON(http.StatusOK, candidates)
 	}
 }
 
@@ -443,7 +529,30 @@ func FetchVoters(context *gin.Context) {
 		}
 		log.Printf("%d rows found.", len(county))
 
-		context.IndentedJSON(http.StatusOK, county)
+		type data struct {
+			County         string
+			Constituency   string
+			Ward           string
+			PollingStation string
+			FirstName      string
+			LastName       string
+			IDNumber       string
+			PhoneNumber    string
+		}
+		var voters []data
+
+		for _, a := range county {
+			for _, b := range a.Constituency {
+				for _, c := range b.Ward {
+					for _, d := range c.PollingStation {
+						for _, e := range d.Voter {
+							voters = append(voters, data{County: a.Name, Constituency: b.Name, Ward: c.Name, PollingStation: d.Name, FirstName: e.FirstName, LastName: e.LastName, IDNumber: e.VoterId, PhoneNumber: e.PhoneNumber})
+						}
+					}
+				}
+			}
+		}
+		context.IndentedJSON(http.StatusOK, voters)
 	}
 }
 
@@ -463,4 +572,98 @@ func FetchConnectedNodes(context *gin.Context) {
 			break
 		}
 	}
+}
+
+func FetchQuickStats(context *gin.Context) {
+	var totalVoters = 0
+	var totalPollingStations = 0
+	var totalVotes = 0
+	var totalPresidentialCandidates = 0
+	var totalDesktopClients = 0
+	var totalOnlineClients = 0
+	var transactionPoolSize = 0
+	var totalProcessedTransactions = 0
+
+	//get total voters
+	voters := []models.Voter{}
+	database, err := gorm.Open(sqlite.Open("nodeDB.sql"), &gorm.Config{})
+
+	if err != nil {
+		panic(err)
+	}
+	if err := database.Find(&voters).Error; err != nil {
+		log.Fatalln(err)
+	}
+	totalVoters = len(voters)
+
+	//get total polling stations
+	pollingStations := []models.PollingStation{}
+	if err := database.Find(&pollingStations).Error; err != nil {
+		log.Fatalln(err)
+	}
+	totalPollingStations = len(pollingStations)
+
+	//get total votes
+	blockChainFile, err := os.ReadFile("chain.json")
+	if err != nil {
+		totalVotes = 0
+	} else {
+		var nodesBlocks []models.Block
+
+		err2 := json.Unmarshal(blockChainFile, &nodesBlocks)
+		if err2 != nil {
+			panic(err2)
+		}
+		var totalTransactions []models.Transaction
+
+		for _, x := range nodesBlocks {
+			data := x.Data
+			var transaction []models.Transaction
+			err2 := json.Unmarshal([]byte(data), &transaction)
+			if err2 != nil {
+				panic(err2)
+			}
+			totalTransactions = append(totalTransactions, transaction...)
+
+		}
+		totalVotes = len(totalTransactions)
+
+		//get total presidential candidates
+		candidates := []models.Candidate{}
+		if err := database.Find(&candidates).Error; err != nil {
+			log.Fatalln(err)
+		}
+		totalPresidentialCandidates = len(candidates)
+
+		//get total desktop clients
+		clients := []models.DesktopClient{}
+		if err := database.Find(&clients).Error; err != nil {
+			log.Fatalln(err)
+		}
+		totalDesktopClients = len(clients)
+
+		//get total online desktop clients:todo
+
+		//get transaction pool size
+		transactions := []models.Transaction{}
+		if err := database.Find(&transactions).Error; err != nil {
+			log.Fatalln(err)
+		}
+		transactionPoolSize = len(transactions)
+
+		//total processed transactions
+		totalProcessedTransactions = totalVotes
+	}
+	data := models.QuickStats{
+		TotalRegisteredVoters:      totalVoters,
+		TotalPollingStations:       totalPollingStations,
+		TotalVotes:                 totalVotes,
+		PresidentialCandidates:     totalPresidentialCandidates,
+		TotalDesktopClients:        totalDesktopClients,
+		OnlineClients:              totalOnlineClients,
+		TransactionPoolSize:        transactionPoolSize,
+		TotalProcessedTransactions: totalProcessedTransactions,
+	}
+	context.IndentedJSON(http.StatusOK, data)
+
 }

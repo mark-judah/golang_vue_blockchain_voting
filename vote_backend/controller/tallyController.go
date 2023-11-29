@@ -5,6 +5,8 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"log"
+	"net/http"
 	"os"
 	"strconv"
 	"vote_backend/models"
@@ -15,24 +17,54 @@ import (
 )
 
 var tallyResponses = 0
+var tallyCompleted = false
+var candidate []models.Candidate
 
 func Tally(context *gin.Context) {
 
 	//change to self excecuting function when a new block is added to the chain
-	token := Client[0].Publish("tallyVotes/1", 0, false, "pass context here")
+	token := Client[0].Publish("tallyVotes/1", 0, false, "tally votes")
 	token.Wait()
+
+	for {
+		if !tallyCompleted {
+			fmt.Println("Tallying results")
+		} else {
+			database, err := gorm.Open(sqlite.Open("nodeDB.sql"), &gorm.Config{})
+			if err != nil {
+				panic(err)
+			}
+			if err := database.Preload("Tally").Find(&candidate).Error; err != nil {
+				log.Fatalln(err)
+			}
+
+			type data struct {
+				TotalVotes string
+				Party      string
+				Candidate  string
+			}
+			var tally []data
+
+			for _, a := range candidate {
+				tally = append(tally, data{Candidate: a.Name, TotalVotes: strconv.Itoa(a.Tally.Total), Party: a.Party})
+			}
+
+			context.IndentedJSON(http.StatusOK, tally)
+			break
+		}
+	}
 }
 
 func TallyFeedback() {
 	blockChainFile, err := os.ReadFile("chain.json")
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
 	}
 	var nodesBlocks []models.Block
 
 	err2 := json.Unmarshal(blockChainFile, &nodesBlocks)
 	if err2 != nil {
-		panic(err2)
+		fmt.Println(err)
 	}
 
 	type HashableBlock struct {
@@ -138,8 +170,12 @@ func FinalTally(tally map[string]int) {
 		}
 		//create  rows for each candidate
 		for candidate, result := range tally {
-			latestTally := models.Tally{CandidateId: candidate, Total: result}
+			latestTally := models.Tally{CandidateID: candidate, Total: result}
+			if err != nil {
+				panic(err)
+			}
 			database.Create(&latestTally)
 		}
+		tallyCompleted = true
 	}
 }

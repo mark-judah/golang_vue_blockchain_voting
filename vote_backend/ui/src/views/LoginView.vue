@@ -73,18 +73,26 @@ export default {
     submitLogin () {
       // console.log(this.$refs.form.formEmail.value)
       console.log(this.loginCreds)
-      axios.post('http://127.0.0.1:3500/api/login', this.loginCreds).then(result => {
-        console.log(result.data)
-        this.ls.set('user', {
-          username: result.data.username,
-          email: result.data.email,
-          token: result.data.token
+      axios.post('http://127.0.0.1:3500/api/login', this.loginCreds)
+        .then((response) => {
+          console.log(response.data)
+          this.ls.set('user', {
+            username: response.data.username,
+            email: response.data.email,
+            token: response.data.token
+          })
+          console.log(this.ls.get('user'))
+          if (this.ls.get('user') != null) {
+            window.location.href = 'admin'
+          }
+        }).catch(function (error) {
+          if (error.response.status === 401) {
+            this.ls.removeAll()
+            window.location.href = '/'
+          } if (error.toJSON().message === 'Network Error') {
+            alert('no internet connection')
+          }
         })
-        console.log(this.ls.get('user'))
-        if (this.ls.get('user') != null) {
-          window.location.href = 'admin'
-        }
-      })
     }
   }
 }

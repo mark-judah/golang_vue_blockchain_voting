@@ -23,7 +23,7 @@
                             <td class="px-1.5 py-2   border ">{{ stats.Status }}</td>
                             <td class="px-1.5 py-2   border ">{{ stats.Term }}</td>
                             <td class="px-1.5 py-2   border ">{{ stats.LogLength }}</td>
-                            <td class="px-1.5 py-2   border ">Kill|Restart|Login</td>
+                            <td class="px-1.5 py-2   border ">Restart|<a :href="`http://127.0.0.1:`+stats.DashboardLink" >Login</a></td>
 
                         </tr>
                     </tbody>
@@ -58,6 +58,13 @@ export default {
       ).then((response) => {
         console.log(response.data)
         this.nodeStats = response.data
+      }).catch(function (error) {
+        if (error.response.status === 401) {
+          ls.removeAll()
+          window.location.href = '/'
+        } if (error.toJSON().message === 'Network Error') {
+          alert('no internet connection')
+        }
       })
     }
   }
