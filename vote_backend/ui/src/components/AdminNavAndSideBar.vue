@@ -25,6 +25,16 @@
                 <div class="flex items-center">
                     <div class="flex items-center">
                         <div class="px-1">
+                            <button type="button" class="flex text-sm  rounded-full">
+                                <img class="w-8 h-8 rounded-full" src="../assets/images/block.svg" alt="block explorer">
+                            </button>
+                        </div>
+                        <div id="tooltip-default" role="tooltip"
+                            class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-gray-900 rounded-lg shadow-sm opacity-0 tooltip dark:bg-gray-700">
+                            Open block explorer
+                            <div class="tooltip-arrow" data-popper-arrow></div>
+                        </div>
+                        <div class="px-1">
                             <button type="button" class="flex text-sm  rounded-full" aria-expanded="false"
                                 data-dropdown-toggle="dropdown-user">
                                 <span class="sr-only">Open user menu</span>

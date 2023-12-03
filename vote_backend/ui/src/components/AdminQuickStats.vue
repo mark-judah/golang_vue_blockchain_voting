@@ -64,6 +64,7 @@
                     <div class="p-1">
                         <p>Total Processed Transactions: {{ stats.TotalProcessedTransactions }}</p>
                     </div>
+
                 </div>
             </div>
             </div>

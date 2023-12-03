@@ -9,4 +9,5 @@ type QuickStats struct {
 	OnlineClients              int
 	TransactionPoolSize        int
 	TotalProcessedTransactions int
+	ResultsPerCounty           interface{}
 }

@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"vote_backend/models"
 
@@ -614,6 +615,12 @@ func FetchConnectedNodes(context *gin.Context) {
 }
 
 func FetchQuickStats(context *gin.Context) {
+	type resultsPerCounty struct {
+		Candidate  string
+		County     string
+		TotalVotes int
+	}
+
 	var totalVoters = 0
 	var totalPollingStations = 0
 	var totalVotes = 0
@@ -622,6 +629,7 @@ func FetchQuickStats(context *gin.Context) {
 	var totalOnlineClients = 0
 	var transactionPoolSize = 0
 	var totalProcessedTransactions = 0
+	var resPerCounty []resultsPerCounty
 
 	//get total voters
 	voters := []models.Voter{}
@@ -693,6 +701,74 @@ func FetchQuickStats(context *gin.Context) {
 		//total processed transactions
 		totalProcessedTransactions = totalVotes
 	}
+
+	//get results per county
+	blocks := []models.Block{}
+	if err := database.Find(&blocks).Error; err != nil {
+		log.Fatalln(err)
+	}
+	var countyCandidate []string
+	var transaction []models.Transaction
+
+	for _, x := range blocks {
+		data := x.Data
+
+		err2 := json.Unmarshal([]byte(data), &transaction)
+		if err2 != nil {
+			panic(err2)
+		}
+		for _, y := range transaction {
+			countyCandidate = append(countyCandidate, strconv.Itoa(y.CountyID)+"-"+y.CandidateId)
+		}
+
+	}
+	var tallyPerCounty = make(map[string]int)
+	for _, county := range countyCandidate {
+		tallyPerCounty[county]++
+	}
+
+	// var tallyPerCandidate = make(map[string]int)
+	// for _, candidate := range candidateIds {
+	// 	tallyPerCandidate[candidate]++
+	// }
+
+	counties := []models.County{}
+	if err := database.Find(&counties).Error; err != nil {
+		log.Fatalln(err)
+	}
+
+	candidates := []models.Candidate{}
+	if err := database.Find(&candidates).Error; err != nil {
+		log.Fatalln(err)
+	}
+
+	for _, x := range counties {
+		for countyCandidate, countyTotal := range tallyPerCounty {
+			county := strings.Split(countyCandidate, "-")[0]
+			candidate_id_string := strings.Split(countyCandidate, "-")[1]
+			cntyID, err := strconv.Atoi(county)
+			if err != nil {
+				panic(err)
+			}
+
+			candidate_id_int, err2 := strconv.Atoi(candidate_id_string)
+			candidate_id_uint := uint(candidate_id_int)
+			if err2 != nil {
+				panic(err2)
+			}
+			if x.ID == uint(cntyID) {
+				for _, y := range candidates {
+					if candidate_id_uint == y.ID {
+						resPerCounty = append(resPerCounty, resultsPerCounty{County: x.Name, TotalVotes: countyTotal, Candidate: y.Name})
+					}
+				}
+			}
+		}
+	}
+
+	fmt.Println("results")
+	fmt.Println(tallyPerCounty)
+
 	data := models.QuickStats{
 		TotalRegisteredVoters:      totalVoters,
 		TotalPollingStations:       totalPollingStations,
@@ -702,6 +778,7 @@ func FetchQuickStats(context *gin.Context) {
 		OnlineClients:              totalOnlineClients,
 		TransactionPoolSize:        transactionPoolSize,
 		TotalProcessedTransactions: totalProcessedTransactions,
+		ResultsPerCounty:           resPerCounty,
 	}
 	context.IndentedJSON(http.StatusOK, data)
 
