@@ -1,8 +1,23 @@
 <template>
     <div class="">
-        <div class="ml-96 mr-12 mt-32 flex justify-start  bg-[#ffffff] h-full">
+      <div class="ml-96 mr-12 mt-32 flex flex-col justify-start  bg-[#ffffff] h-full">
+      <div class="flex flex-row justify-between items-center w-full">
+        <div>
+          <p class="px-12">Polling Stations</p>
+        </div>
 
-            <div class="p-12 flex justify-center">
+        <div class="flex flex-row px-12">
+          <router-link :to="{ name: 'polling-stations' }" @click="$router.go()" class="flex items-center p-2">
+            <img src="../assets/images/refresh.svg" class="w-6 h-8">
+          </router-link>
+
+          <router-link :to="{ name: 'new-polling-station' }" class="flex items-center p-2">
+            <img src="../assets/images/add.svg" class="w-6 h-8">
+          </router-link>
+        </div>
+      </div>
+                 <div class="px-12 flex justify-center w-fit">
+
                 <table class="table-auto space-y-6">
                     <thead class="">
 
@@ -12,7 +27,7 @@
                             <th class="px-1.5 py-2 border">County</th>
                             <th class="px-1.5 py-2 border">Constituency</th>
                             <th class="px-1.5 py-2 border">Ward</th>
-                            <th class="px-1.5 py-2 border">Action</th>
+
                         </tr>
                     </thead>
                     <tr v-for="(data, i) in this.allPollingStations"  :key="data" class="bg-white border-b">
@@ -21,7 +36,7 @@
                             <td class="px-1.5 py-2   border "  >{{ data.County   }}</td>
                             <td class="px-1.5 py-2   border ">{{ data.Constituency }}</td>
                             <td class="px-1.5 py-2   border "  >{{ data.Ward   }}</td>
-                            <td class="px-1.5 py-2   border ">Edit|Delete</td>
+
                         </tr>
                 </table>
             </div>

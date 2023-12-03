@@ -47,7 +47,7 @@
                         <h1 class="text-center font-bold">Desktop Clients Stats</h1>
                     </div>
                     <div class="p-1">
-                        <p>Total DesktopClients Voters: {{ stats.TotalDesktopClients }}</p>
+                        <p>Total DesktopClients {{ stats.TotalDesktopClients }}</p>
                     </div>
                     <div class="p-1">
                         <p>Total Online Clients: {{ stats.OnlineClients }}</p>

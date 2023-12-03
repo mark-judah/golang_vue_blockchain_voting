@@ -354,9 +354,9 @@ var receiveMsgs mqtt.MessageHandler = func(client mqtt.Client, message mqtt.Mess
 			//commit to log.json file
 			PersistLog(newTransaction)
 
-			if ValidateVote(newTransaction) {
-				database.Create(&newTransaction)
-			}
+			// if ValidateVote(newTransaction) {
+			database.Create(&newTransaction)
+			//}
 
 			database.Create(&newTransaction)
 
@@ -419,9 +419,9 @@ var receiveMsgs mqtt.MessageHandler = func(client mqtt.Client, message mqtt.Mess
 					//commit to log.json file
 					PersistLog(x)
 
-					if ValidateVote(x) {
-						database.Create(&x)
-					}
+					//if ValidateVote(x) {
+					database.Create(&x)
+					//}
 
 				}
 				SyncAdminDashLog()

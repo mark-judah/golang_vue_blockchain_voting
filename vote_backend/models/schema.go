@@ -17,22 +17,23 @@ type Block struct {
 }
 
 type Transaction struct {
-	Txid            string    `json:"txid" gorm:"primaryKey"`
-	NodeId          string    `json:"nodeId"`
-	CandidateId     string    `json:"candidateId"`
-	CreatedAt       time.Time `json:"timestamp"`
-	TransactionHash string    `json:"transactionHash"`
+	Txid             string    `json:"txid" gorm:"primaryKey"`
+	NodeId           string    `json:"nodeId"`
+	CandidateId      string    `json:"candidateId"`
+	CountyID         int       `json:"county_id" gorm:"column:county_id"`
+	ConstituencyID   int       `json:"constituency_id" gorm:"column:constituency_id"`
+	WardID           int       `json:"ward_id" gorm:"column:ward_id"`
+	PollingStationID int       `json:"polling_station_id" gorm:"column:polling_station_id"`
+	CreatedAt        time.Time `json:"timestamp"`
 }
 
 type DesktopClient struct {
 	gorm.Model
-	Name             string `json:"name" gorm:"unique"`
-	SerialNumber     string
-	MacAddress       string
-	CountyID         int `gorm:"column:county_id"`
-	ConstituencyID   int `gorm:"column:constituency_id"`
-	WardID           int `gorm:"column:ward_id"`
-	PollingStationID int `gorm:"column:polling_station_id"`
+	SerialNumber     string `json:"serial_number" gorm:"unique"`
+	CountyID         int    `json:"county_id" gorm:"column:county_id"`
+	ConstituencyID   int    `json:"constituency_id" gorm:"column:constituency_id"`
+	WardID           int    `json:"ward_id" gorm:"column:ward_id"`
+	PollingStationID int    `json:"polling_station_id" gorm:"column:polling_station_id"`
 }
 
 type Voter struct {
@@ -60,6 +61,9 @@ type Candidate struct {
 	Name             string `json:"name" gorm:"unique"`
 	Position         string `json:"position"`
 	Party            string `json:"party"`
+	Slogan           string `json:"slogan"`
+	Statement        string `json:"statement"`
+	Photo            string `json:"photo"`
 	CountyID         int    `gorm:"column:county_id"`
 	ConstituencyID   int    `gorm:"column:constituency_id"`
 	WardID           int    `gorm:"column:ward_id"`

@@ -26,6 +26,7 @@ func StartApiServer() {
 	router.Use(cors.New(config))
 	api := router.Group("/api")
 	{
+		api.GET("/get-all-candidates", FetchCandidates)
 		api.POST("/new-vote", NewTransaction)
 		api.GET("/tally-votes", Tally)
 		api.POST("/login", Login)
@@ -46,12 +47,13 @@ func StartApiServer() {
 			securedRoutes.GET("/get-all-polling-stations", FetchPollingStations)
 			securedRoutes.POST("/new-desktop-client", NewDesktopClient)
 			securedRoutes.GET("/get-all-desktop-clients", FetchDesktopClients)
-			securedRoutes.GET("/get-all-candidates", FetchCandidates)
 			securedRoutes.POST("/new-candidate", NewCandidate)
 			securedRoutes.GET("/get-all-voters", FetchVoters)
 			securedRoutes.POST("/new-voter", NewVoter)
 			securedRoutes.GET("/get-connected-nodes", FetchConnectedNodes)
 			securedRoutes.GET("/get-quick-stats", FetchQuickStats)
+			securedRoutes.GET("/get-all-regions", FetchRegions)
+			securedRoutes.GET("/get-all-transactions", FetchTransactions)
 
 		}
 	}

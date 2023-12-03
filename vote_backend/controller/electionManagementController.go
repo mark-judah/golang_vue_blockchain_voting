@@ -20,7 +20,7 @@ import (
 var NodeStats []models.NodeStats
 
 func NewCounty(context *gin.Context) {
-	var newCounty models.County
+	var newCounty []models.County
 	var currentUserDetails models.Users
 
 	database, err := gorm.Open(sqlite.Open("nodeDB.sql"), &gorm.Config{})
@@ -44,21 +44,24 @@ func NewCounty(context *gin.Context) {
 		context.IndentedJSON(401, "You are not authorized to perform this action")
 		return
 	} else {
-		result := database.Omit(clause.Associations).Create(&newCounty)
-		if result.Error != nil {
-			context.IndentedJSON(http.StatusBadRequest, result.Error.Error())
-		} else {
-			context.IndentedJSON(http.StatusCreated, newCounty)
-			newAdminDashLog := models.AdminDashLog{Type: "County", Payload: newCounty}
-			PersistAdminDashLog(newAdminDashLog)
+		for _, x := range newCounty {
 
-			mqttMessage := models.Message{Type: "new_county", Payload: newCounty}
-			data, err := json.Marshal(mqttMessage)
-			if err != nil {
-				panic(err)
+			result := database.Omit(clause.Associations).Create(&x)
+			if result.Error != nil {
+				context.IndentedJSON(http.StatusBadRequest, result.Error.Error())
+			} else {
+				context.IndentedJSON(http.StatusCreated, x)
+				newAdminDashLog := models.AdminDashLog{Type: "County", Payload: x}
+				PersistAdminDashLog(newAdminDashLog)
+
+				mqttMessage := models.Message{Type: "new_county", Payload: x}
+				data, err := json.Marshal(mqttMessage)
+				if err != nil {
+					panic(err)
+				}
+				token := Client[0].Publish("adminTransaction/1", 0, false, data)
+				token.Wait()
 			}
-			token := Client[0].Publish("adminTransaction/1", 0, false, data)
-			token.Wait()
 		}
 	}
 }
@@ -81,7 +84,7 @@ func FetchCounties(context *gin.Context) {
 }
 
 func NewConstituency(context *gin.Context) {
-	var newConstituency models.Constituency
+	var newConstituency []models.Constituency
 	var currentUserDetails models.Users
 
 	database, err := gorm.Open(sqlite.Open("nodeDB.sql"), &gorm.Config{})
@@ -105,20 +108,22 @@ func NewConstituency(context *gin.Context) {
 		context.IndentedJSON(401, "You are not authorized to perform this action")
 		return
 	} else {
-		result := database.Create(&newConstituency)
-		if result.Error != nil {
-			context.IndentedJSON(http.StatusBadRequest, result.Error.Error())
-		} else {
-			context.IndentedJSON(http.StatusCreated, newConstituency)
-			newAdminDashLog := models.AdminDashLog{Type: "Constituency", Payload: newConstituency}
-			PersistAdminDashLog(newAdminDashLog)
-			mqttMessage := models.Message{Type: "new_constituency", Payload: newConstituency}
-			data, err := json.Marshal(mqttMessage)
-			if err != nil {
-				panic(err)
+		for _, x := range newConstituency {
+			result := database.Create(&x)
+			if result.Error != nil {
+				context.IndentedJSON(http.StatusBadRequest, result.Error.Error())
+			} else {
+				context.IndentedJSON(http.StatusCreated, x)
+				newAdminDashLog := models.AdminDashLog{Type: "Constituency", Payload: x}
+				PersistAdminDashLog(newAdminDashLog)
+				mqttMessage := models.Message{Type: "new_constituency", Payload: x}
+				data, err := json.Marshal(mqttMessage)
+				if err != nil {
+					panic(err)
+				}
+				token := Client[0].Publish("adminTransaction/1", 0, false, data)
+				token.Wait()
 			}
-			token := Client[0].Publish("adminTransaction/1", 0, false, data)
-			token.Wait()
 		}
 	}
 }
@@ -137,14 +142,15 @@ func FetchConstituencies(context *gin.Context) {
 		log.Printf("%d rows found.", len(county))
 
 		type data struct {
-			County       string
-			Constituency string
+			ConstituencyID uint
+			County         string
+			Constituency   string
 		}
 		var constituencies []data
 
 		for _, a := range county {
 			for _, b := range a.Constituency {
-				constituencies = append(constituencies, data{County: a.Name, Constituency: b.Name})
+				constituencies = append(constituencies, data{County: a.Name, Constituency: b.Name, ConstituencyID: b.ID})
 			}
 		}
 		context.IndentedJSON(http.StatusOK, constituencies)
@@ -152,7 +158,7 @@ func FetchConstituencies(context *gin.Context) {
 }
 
 func NewWard(context *gin.Context) {
-	var newWard models.Ward
+	var newWard []models.Ward
 	var currentUserDetails models.Users
 
 	database, err := gorm.Open(sqlite.Open("nodeDB.sql"), &gorm.Config{})
@@ -176,20 +182,22 @@ func NewWard(context *gin.Context) {
 		context.IndentedJSON(401, "You are not authorized to perform this action")
 		return
 	} else {
-		result := database.Create(&newWard)
-		if result.Error != nil {
-			context.IndentedJSON(http.StatusBadRequest, result.Error.Error())
-		} else {
-			context.IndentedJSON(http.StatusCreated, newWard)
-			newAdminDashLog := models.AdminDashLog{Type: "Ward", Payload: newWard}
-			PersistAdminDashLog(newAdminDashLog)
-			mqttMessage := models.Message{Type: "new_ward", Payload: newWard}
-			data, err := json.Marshal(mqttMessage)
-			if err != nil {
-				panic(err)
+		for _, x := range newWard {
+			result := database.Create(&x)
+			if result.Error != nil {
+				context.IndentedJSON(http.StatusBadRequest, result.Error.Error())
+			} else {
+				context.IndentedJSON(http.StatusCreated, x)
+				newAdminDashLog := models.AdminDashLog{Type: "Ward", Payload: x}
+				PersistAdminDashLog(newAdminDashLog)
+				mqttMessage := models.Message{Type: "new_ward", Payload: x}
+				data, err := json.Marshal(mqttMessage)
+				if err != nil {
+					panic(err)
+				}
+				token := Client[0].Publish("adminTransaction/1", 0, false, data)
+				token.Wait()
 			}
-			token := Client[0].Publish("adminTransaction/1", 0, false, data)
-			token.Wait()
 		}
 	}
 }
@@ -207,6 +215,7 @@ func FetchWards(context *gin.Context) {
 		}
 		log.Printf("%d rows found.", len(county))
 		type data struct {
+			WardID       uint
 			County       string
 			Constituency string
 			Ward         string
@@ -216,7 +225,7 @@ func FetchWards(context *gin.Context) {
 		for _, a := range county {
 			for _, b := range a.Constituency {
 				for _, c := range b.Ward {
-					wards = append(wards, data{County: a.Name, Constituency: b.Name, Ward: c.Name})
+					wards = append(wards, data{County: a.Name, Constituency: b.Name, Ward: c.Name, WardID: c.ID})
 				}
 			}
 		}
@@ -225,7 +234,7 @@ func FetchWards(context *gin.Context) {
 }
 
 func NewPollingStation(context *gin.Context) {
-	var newPollingStation models.PollingStation
+	var newPollingStation []models.PollingStation
 	var currentUserDetails models.Users
 
 	database, err := gorm.Open(sqlite.Open("nodeDB.sql"), &gorm.Config{})
@@ -249,20 +258,22 @@ func NewPollingStation(context *gin.Context) {
 		context.IndentedJSON(401, "You are not authorized to perform this action")
 		return
 	} else {
-		result := database.Create(&newPollingStation)
-		if result.Error != nil {
-			context.IndentedJSON(http.StatusBadRequest, result.Error.Error())
-		} else {
-			context.IndentedJSON(http.StatusCreated, newPollingStation)
-			newAdminDashLog := models.AdminDashLog{Type: "PollingStation", Payload: newPollingStation}
-			PersistAdminDashLog(newAdminDashLog)
-			mqttMessage := models.Message{Type: "new_polling_station", Payload: newPollingStation}
-			data, err := json.Marshal(mqttMessage)
-			if err != nil {
-				panic(err)
+		for _, x := range newPollingStation {
+			result := database.Create(&x)
+			if result.Error != nil {
+				context.IndentedJSON(http.StatusBadRequest, result.Error.Error())
+			} else {
+				context.IndentedJSON(http.StatusCreated, x)
+				newAdminDashLog := models.AdminDashLog{Type: "PollingStation", Payload: x}
+				PersistAdminDashLog(newAdminDashLog)
+				mqttMessage := models.Message{Type: "new_polling_station", Payload: x}
+				data, err := json.Marshal(mqttMessage)
+				if err != nil {
+					panic(err)
+				}
+				token := Client[0].Publish("adminTransaction/1", 0, false, data)
+				token.Wait()
 			}
-			token := Client[0].Publish("adminTransaction/1", 0, false, data)
-			token.Wait()
 		}
 	}
 }
@@ -281,10 +292,11 @@ func FetchPollingStations(context *gin.Context) {
 		log.Printf("%d rows found.", len(county))
 
 		type data struct {
-			County         string
-			Constituency   string
-			Ward           string
-			PollingStation string
+			PollingStationID uint
+			County           string
+			Constituency     string
+			Ward             string
+			PollingStation   string
 		}
 		var polling_stations []data
 
@@ -292,7 +304,12 @@ func FetchPollingStations(context *gin.Context) {
 			for _, b := range a.Constituency {
 				for _, c := range b.Ward {
 					for _, d := range c.PollingStation {
-						polling_stations = append(polling_stations, data{County: a.Name, Constituency: b.Name, Ward: c.Name, PollingStation: d.Name})
+						polling_stations = append(polling_stations, data{
+							PollingStationID: d.ID,
+							County:           a.Name,
+							Constituency:     b.Name,
+							Ward:             c.Name, PollingStation: d.Name,
+						})
 					}
 				}
 			}
@@ -356,15 +373,15 @@ func FetchDesktopClients(context *gin.Context) {
 			log.Fatalln(err)
 		}
 		log.Printf("%d rows found.", len(county))
+		fmt.Println(county)
 
 		type data struct {
+			ClientID       uint
 			County         string
 			Constituency   string
 			Ward           string
 			PollingStation string
-			Name           string
 			SerialNumber   string
-			MacAddress     string
 		}
 		var desktop_clients []data
 
@@ -373,7 +390,14 @@ func FetchDesktopClients(context *gin.Context) {
 				for _, c := range b.Ward {
 					for _, d := range c.PollingStation {
 						for _, e := range d.DesktopClient {
-							desktop_clients = append(desktop_clients, data{County: a.Name, Constituency: b.Name, Ward: c.Name, PollingStation: d.Name, Name: e.Name, SerialNumber: e.SerialNumber, MacAddress: e.MacAddress})
+							desktop_clients = append(desktop_clients, data{
+								ClientID:       e.ID,
+								County:         a.Name,
+								Constituency:   b.Name,
+								Ward:           c.Name,
+								PollingStation: d.Name,
+								SerialNumber:   e.SerialNumber})
+
 						}
 					}
 				}
@@ -384,7 +408,7 @@ func FetchDesktopClients(context *gin.Context) {
 }
 
 func NewCandidate(context *gin.Context) {
-	var newCandidate models.Candidate
+	var newCandidate []models.Candidate
 	var currentUserDetails models.Users
 
 	database, err := gorm.Open(sqlite.Open("nodeDB.sql"), &gorm.Config{})
@@ -408,20 +432,22 @@ func NewCandidate(context *gin.Context) {
 		context.IndentedJSON(401, "You are not authorized to perform this action")
 		return
 	} else {
-		result := database.Create(&newCandidate)
-		if result.Error != nil {
-			context.IndentedJSON(http.StatusBadRequest, result.Error.Error())
-		} else {
-			context.IndentedJSON(http.StatusCreated, newCandidate)
-			newAdminDashLog := models.AdminDashLog{Type: "Candidate", Payload: newCandidate}
-			PersistAdminDashLog(newAdminDashLog)
-			mqttMessage := models.Message{Type: "new_candidate", Payload: newCandidate}
-			data, err := json.Marshal(mqttMessage)
-			if err != nil {
-				panic(err)
+		for _, x := range newCandidate {
+			result := database.Create(&x)
+			if result.Error != nil {
+				context.IndentedJSON(http.StatusBadRequest, result.Error.Error())
+			} else {
+				context.IndentedJSON(http.StatusCreated, x)
+				newAdminDashLog := models.AdminDashLog{Type: "Candidate", Payload: x}
+				PersistAdminDashLog(newAdminDashLog)
+				mqttMessage := models.Message{Type: "new_candidate", Payload: x}
+				data, err := json.Marshal(mqttMessage)
+				if err != nil {
+					panic(err)
+				}
+				token := Client[0].Publish("adminTransaction/1", 0, false, data)
+				token.Wait()
 			}
-			token := Client[0].Publish("adminTransaction/1", 0, false, data)
-			token.Wait()
 		}
 	}
 }
@@ -440,6 +466,7 @@ func FetchCandidates(context *gin.Context) {
 		log.Printf("%d rows found.", len(county))
 
 		type data struct {
+			CandidateId    uint
 			County         string
 			Constituency   string
 			Ward           string
@@ -447,6 +474,9 @@ func FetchCandidates(context *gin.Context) {
 			Candidate      string
 			Position       string
 			Party          string
+			Slogan         string
+			Statement      string
+			Photo          string
 		}
 		var candidates []data
 
@@ -455,7 +485,19 @@ func FetchCandidates(context *gin.Context) {
 				for _, c := range b.Ward {
 					for _, d := range c.PollingStation {
 						for _, e := range d.Candidate {
-							candidates = append(candidates, data{County: a.Name, Constituency: b.Name, Ward: c.Name, PollingStation: d.Name, Candidate: e.Name, Position: e.Position, Party: e.Party})
+							candidates = append(candidates, data{
+								CandidateId:    e.ID,
+								County:         a.Name,
+								Constituency:   b.Name,
+								Ward:           c.Name,
+								PollingStation: d.Name,
+								Candidate:      e.Name,
+								Position:       e.Position,
+								Party:          e.Party,
+								Slogan:         e.Slogan,
+								Statement:      e.Statement,
+								Photo:          e.Photo,
+							})
 						}
 					}
 				}
@@ -554,9 +596,6 @@ func FetchVoters(context *gin.Context) {
 		}
 		context.IndentedJSON(http.StatusOK, voters)
 	}
-}
-
-func FetchTransactionPool(context *gin.Context) {
 }
 
 func FetchConnectedNodes(context *gin.Context) {
@@ -665,5 +704,91 @@ func FetchQuickStats(context *gin.Context) {
 		TotalProcessedTransactions: totalProcessedTransactions,
 	}
 	context.IndentedJSON(http.StatusOK, data)
+
+}
+
+func FetchRegions(context *gin.Context) {
+	database, err := gorm.Open(sqlite.Open("nodeDB.sql"), &gorm.Config{})
+	if err != nil {
+		panic(err)
+	}
+	counties := []models.County{}
+	if err := database.Find(&counties).Error; err != nil {
+		log.Fatalln(err)
+	}
+	constituencies := []models.Constituency{}
+	if err := database.Find(&constituencies).Error; err != nil {
+		log.Fatalln(err)
+	}
+	wards := []models.Ward{}
+	if err := database.Find(&wards).Error; err != nil {
+		log.Fatalln(err)
+	}
+	polling_stations := []models.PollingStation{}
+	if err := database.Find(&polling_stations).Error; err != nil {
+		log.Fatalln(err)
+	}
+
+	regions := models.Region{Counties: counties, Constituencies: constituencies, Wards: wards, PollingStations: polling_stations}
+	context.IndentedJSON(http.StatusOK, regions)
+}
+
+func FetchTransactions(context *gin.Context) {
+	database, err := gorm.Open(sqlite.Open("nodeDB.sql"), &gorm.Config{})
+	if err != nil {
+		panic(err)
+	}
+	transactions := []models.Transaction{}
+	if err := database.Find(&transactions).Error; err != nil {
+		log.Fatalln(err)
+	}
+
+	type data struct {
+		Txid           string
+		NodeId         string
+		Candidate      string
+		County         string
+		Constituency   string
+		Ward           string
+		PollingStation string
+	}
+
+	var transactionData []data
+
+	for _, x := range transactions {
+		candidate := models.Candidate{}
+		county := models.County{}
+		constituency := models.Constituency{}
+		ward := models.Ward{}
+		polling_station := models.PollingStation{}
+
+		if err := database.Where("ID=?", x.CandidateId).First(&candidate).Error; err != nil {
+			log.Fatalln(err)
+		}
+		if err := database.Where("ID=?", x.CountyID).First(&county).Error; err != nil {
+			log.Fatalln(err)
+		}
+		if err := database.Where("ID=?", x.ConstituencyID).First(&constituency).Error; err != nil {
+			log.Fatalln(err)
+		}
+		if err := database.Where("ID=?", x.WardID).First(&ward).Error; err != nil {
+			log.Fatalln(err)
+		}
+		if err := database.Where("ID=?", x.PollingStationID).First(&polling_station).Error; err != nil {
+			log.Fatalln(err)
+		}
+
+		transactionData = append(transactionData, data{
+			Txid:           x.Txid,
+			NodeId:         x.NodeId,
+			Candidate:      candidate.Name,
+			County:         county.Name,
+			Constituency:   constituency.Name,
+			Ward:           ward.Name,
+			PollingStation: polling_station.Name,
+		})
+	}
+
+	context.IndentedJSON(http.StatusOK, transactionData)
 
 }

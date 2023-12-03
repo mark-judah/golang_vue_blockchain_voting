@@ -1,8 +1,20 @@
 <template>
     <div class="">
-        <div class="ml-96 mr-12 mt-32 flex justify-start  bg-[#ffffff] h-full">
+      <div class="ml-96 mr-12 mt-32 flex flex-col justify-start  bg-[#ffffff] h-full">
+      <div class="flex flex-row justify-between items-center w-full">
+        <div>
+          <p class="px-12">Connected Nodes</p>
+        </div>
 
-            <div class="p-12 flex justify-center">
+        <div class="flex flex-row px-12">
+          <router-link :to="{ name: 'connected-nodes' }" @click="$router.go()" class="flex items-center p-2">
+            <img src="../assets/images/refresh.svg" class="w-6 h-8">
+          </router-link>
+
+        </div>
+      </div>
+                 <div class="px-12 flex justify-center w-fit">
+
                 <table class="table-auto space-y-6">
                     <thead class="">
 
