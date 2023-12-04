@@ -18,6 +18,8 @@ import NewVoter from '../views/NewVoter.vue'
 import DesktopClients from '../views/DesktopClients.vue'
 import TransactionPool from '../views/TransactionPool.vue'
 import ConnectedNodes from '../views/ConnectedNodes.vue'
+import AllResults from '../views/AllResults.vue'
+import BlockExplorer from '../views/BlockExplorer.vue'
 
 const routes = [
   {
@@ -103,14 +105,26 @@ const routes = [
     path: '/desktop-clients',
     name: 'desktop-clients',
     component: DesktopClients
-  }, {
+  },
+  {
     path: '/transaction-pool',
     name: 'transaction-pool',
     component: TransactionPool
-  }, {
+  },
+  {
     path: '/connected-nodes',
     name: 'connected-nodes',
     component: ConnectedNodes
+  },
+  {
+    path: '/results',
+    name: 'results',
+    component: AllResults
+  },
+  {
+    path: '/block-explorer',
+    name: 'block-explorer',
+    component: BlockExplorer
   },
   {
     path: '/:pathMatch(.*)*',

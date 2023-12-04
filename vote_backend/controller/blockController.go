@@ -5,11 +5,14 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 	"strconv"
+	"unsafe"
 	"vote_backend/models"
 	"vote_backend/utils"
 
+	"github.com/gin-gonic/gin"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
@@ -139,4 +142,151 @@ func appendToChain(newBlock models.Block) {
 			panic(err9)
 		}
 	}
+}
+
+func FetchBlockChain(context *gin.Context) {
+	blockChainFile, err := os.ReadFile("chain.json")
+	if err != nil {
+		fmt.Println(err)
+	}
+	type blockData struct {
+		BlockHeight       int
+		BlockHash         string
+		PreviousBlockHash string
+		NoOfTransactions  int
+		BlockSize         uintptr
+	}
+	var nodesBlocks []models.Block
+	var data []blockData
+
+	err2 := json.Unmarshal(blockChainFile, &nodesBlocks)
+	if err2 != nil {
+		fmt.Println(err2)
+	}
+
+	for _, x := range nodesBlocks {
+		y := x.Data
+		var transactions []models.Transaction
+		err3 := json.Unmarshal([]byte(y), &transactions)
+		if err3 != nil {
+			panic(err3)
+		}
+		data = append(data, blockData{BlockHeight: x.Index, BlockHash: x.BlockHash, PreviousBlockHash: x.PreviousBlockHash, NoOfTransactions: len(transactions), BlockSize: unsafe.Sizeof(x)})
+	}
+	context.IndentedJSON(http.StatusOK, data)
+
+}
+
+func FetchNetworkState(context *gin.Context) {
+	blockChainFile, err := os.ReadFile("chain.json")
+	if err != nil {
+		fmt.Println(err)
+	}
+	type blockData struct {
+		BlockHeight      int
+		NoOfTransactions int
+	}
+	var nodesBlocks []models.Block
+
+	err2 := json.Unmarshal(blockChainFile, &nodesBlocks)
+	if err2 != nil {
+		fmt.Println(err2)
+	}
+
+	var transactions []models.Transaction
+	var all_transactions []models.Transaction
+
+	for _, x := range nodesBlocks {
+		y := x.Data
+		err3 := json.Unmarshal([]byte(y), &transactions)
+		if err3 != nil {
+			panic(err3)
+		}
+		all_transactions = append(all_transactions, transactions...)
+	}
+
+	data := blockData{BlockHeight: len(nodesBlocks), NoOfTransactions: len(all_transactions)}
+	context.IndentedJSON(http.StatusOK, data)
+
+}
+
+func FindTransactionByID(context *gin.Context) {
+	type txid struct {
+		txid string
+	}
+	var txidVal txid
+	if err := context.BindJSON(&txidVal); err != nil {
+		return
+	}
+
+	blockChainFile, err := os.ReadFile("chain.json")
+	if err != nil {
+		fmt.Println(err)
+	}
+	type transactionData struct {
+		BlockHeight int
+		Transaction models.Transaction
+	}
+
+	var data []transactionData
+	var nodesBlocks []models.Block
+
+	err2 := json.Unmarshal(blockChainFile, &nodesBlocks)
+	if err2 != nil {
+		fmt.Println(err2)
+	}
+
+	var transaction models.Transaction
+
+	for i, x := range nodesBlocks {
+		y := x.Data
+		err3 := json.Unmarshal([]byte(y), &transaction)
+		if err3 != nil {
+			panic(err3)
+		}
+		if transaction.Txid == txidVal.txid {
+			data = append(data, transactionData{BlockHeight: i, Transaction: transaction})
+		}
+	}
+	context.IndentedJSON(http.StatusOK, data)
+
+}
+
+func FindTransactionsByBlockHash(context *gin.Context) {
+
+	type hash struct {
+		hash string
+	}
+	var hashVal hash
+	if err := context.BindJSON(&hashVal); err != nil {
+		return
+	}
+
+	blockChainFile, err := os.ReadFile("chain.json")
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	var nodesBlocks []models.Block
+
+	err2 := json.Unmarshal(blockChainFile, &nodesBlocks)
+	if err2 != nil {
+		fmt.Println(err2)
+	}
+
+	var transactions []models.Transaction
+
+	for _, x := range nodesBlocks {
+
+		if x.BlockHash == hashVal.hash {
+			y := x.Data
+			err3 := json.Unmarshal([]byte(y), &transactions)
+			if err3 != nil {
+				panic(err3)
+			}
+		}
+
+	}
+	context.IndentedJSON(http.StatusOK, transactions)
+
 }

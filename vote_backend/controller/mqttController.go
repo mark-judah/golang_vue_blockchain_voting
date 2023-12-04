@@ -368,7 +368,7 @@ var receiveMsgs mqtt.MessageHandler = func(client mqtt.Client, message mqtt.Mess
 
 		if utils.GetClientState() == "leader" {
 			if _, err := os.Stat("log.json"); errors.Is(err, os.ErrNotExist) {
-				//log.json doesn't exist,retur empty transactions
+				//log.json doesn't exist,return empty transactions
 				mqttMessage := models.Message{Type: "leader_log_response", Payload: transactions}
 				data, err := json.Marshal(mqttMessage)
 				if err != nil {
@@ -492,32 +492,32 @@ var receiveMsgs mqtt.MessageHandler = func(client mqtt.Client, message mqtt.Mess
 				if result.Error != nil {
 					panic(result.Error)
 				}
-			case reflect.ValueOf(leaderConstituency).IsZero():
+			case !reflect.ValueOf(leaderConstituency).IsZero():
 				result := database.Create(&leaderConstituency)
 				if result.Error != nil {
 					panic(result.Error)
 				}
-			case reflect.ValueOf(leaderWard).IsZero():
+			case !reflect.ValueOf(leaderWard).IsZero():
 				result := database.Create(&leaderWard)
 				if result.Error != nil {
 					panic(result.Error)
 				}
-			case reflect.ValueOf(leaderPollingStation).IsZero():
+			case !reflect.ValueOf(leaderPollingStation).IsZero():
 				result := database.Create(&leaderPollingStation)
 				if result.Error != nil {
 					panic(result.Error)
 				}
-			case reflect.ValueOf(leaderDesktopClient).IsZero():
+			case !reflect.ValueOf(leaderDesktopClient).IsZero():
 				result := database.Create(&leaderDesktopClient)
 				if result.Error != nil {
 					panic(result.Error)
 				}
-			case reflect.ValueOf(leaderCandidate).IsZero():
+			case !reflect.ValueOf(leaderCandidate).IsZero():
 				result := database.Create(&leaderCandidate)
 				if result.Error != nil {
 					panic(result.Error)
 				}
-			case reflect.ValueOf(leaderVoter).IsZero():
+			case !reflect.ValueOf(leaderVoter).IsZero():
 				result := database.Create(&leaderVoter)
 				if result.Error != nil {
 					panic(result.Error)
@@ -530,13 +530,13 @@ var receiveMsgs mqtt.MessageHandler = func(client mqtt.Client, message mqtt.Mess
 
 		if utils.GetClientState() == "leader" {
 			if _, err := os.Stat("admin_dash_log.json"); errors.Is(err, os.ErrNotExist) {
-				//log.json doesn't exist,retur empty transactions
+				//log.json doesn't exist,return empty transactions
 				mqttMessage := models.Message{Type: "leader_admin_dash_log_response", Payload: admin_dash_log}
 				data, err := json.Marshal(mqttMessage)
 				if err != nil {
 					panic(err)
 				}
-				token := client.Publish("leaderLogResponse/1", 0, false, data)
+				token := client.Publish("leaderAdminDashLogResponse/1", 0, false, data)
 				token.Wait()
 				return
 			}
@@ -566,7 +566,7 @@ var receiveMsgs mqtt.MessageHandler = func(client mqtt.Client, message mqtt.Mess
 			//delete old log file
 			err := os.Remove("admin_dash_log.json")
 			if err != nil {
-				fmt.Println("dmin dash log ile doesn't exist")
+				fmt.Println("admin dash log file doesn't exist")
 			}
 			database, err := gorm.Open(sqlite.Open("nodeDB.sql"), &gorm.Config{})
 			if err != nil {

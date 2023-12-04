@@ -35,7 +35,7 @@
                             <td class="px-1.5 py-2   border ">{{ stats.Status }}</td>
                             <td class="px-1.5 py-2   border ">{{ stats.Term }}</td>
                             <td class="px-1.5 py-2   border ">{{ stats.LogLength }}</td>
-                            <td class="px-1.5 py-2   border ">Restart|<a :href="`http://127.0.0.1:`+stats.DashboardLink" >Login</a></td>
+                            <td class="px-1.5 py-2   border "><a :href="`http://127.0.0.1:`+stats.DashboardLink" >Login</a></td>
 
                         </tr>
                     </tbody>

@@ -30,6 +30,11 @@ func StartApiServer() {
 		api.POST("/new-vote", NewTransaction)
 		api.GET("/tally-votes", Tally)
 		api.POST("/login", Login)
+		api.GET("/get-blockchain", FetchBlockChain)
+		api.GET("/get-quick-stats", FetchQuickStats)
+		api.GET("/get-network-state", FetchNetworkState)
+		api.POST("/find-transaction-by-id", FindTransactionByID)
+		api.POST("/find-transactions-by-hash", FindTransactionsByBlockHash)
 
 		securedRoutes := api.Group("/secured").Use(Auth())
 		{

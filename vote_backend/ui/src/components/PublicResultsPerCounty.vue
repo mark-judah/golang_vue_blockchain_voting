@@ -15,7 +15,6 @@
 
 <script>
 import axios from 'axios'
-import SecureLS from 'secure-ls'
 import { Chart as ChartJS } from 'chart.js/auto'
 
 export default {
@@ -44,13 +43,8 @@ export default {
 
   methods: {
     getStats () {
-      const ls = new SecureLS()
-      const config = {
-        headers: { Authorization: `Bearer ${ls.get('user').token}` }
-      }
       axios.get(
-        'http://127.0.0.1:3500/api/secured/get-quick-stats', config
-      ).then((response) => {
+        'http://127.0.0.1:3500/api/get-quick-stats').then((response) => {
         console.log(response.data.ResultsPerCounty[0].TotalVotes)
         this.stats = response.data.ResultsPerCounty
         for (const i in this.stats) {
@@ -62,12 +56,6 @@ export default {
         this.renderChat()
       }).catch(function (error) {
         console.log(error)
-        // if (error.response.status === 401) {
-        //   ls.removeAll()
-        //   window.location.href = '/'
-        // } if (error.toJSON().message === 'Network Error') {
-        //   alert('no internet connection')
-        // }
       })
     },
 

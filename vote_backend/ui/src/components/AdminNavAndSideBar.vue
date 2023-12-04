@@ -3,7 +3,7 @@
         <div class="">
             <div class="flex items-center justify-between">
                 <div class="flex items-center justify-start">
-                    <div class="bg-[#1E1E1E] flex ">
+                    <div class="bg-[#1E1E1E] flex">
                         <router-link :to="{ name: 'admin' }">
                             <p class="p-2.5 text-xl font-semibold dark:text-white mr-5">
                                 ChainVote Admin
@@ -24,16 +24,14 @@
                 </div>
                 <div class="flex items-center">
                     <div class="flex items-center">
-                        <div class="px-1">
-                            <button type="button" class="flex text-sm  rounded-full">
-                                <img class="w-8 h-8 rounded-full" src="../assets/images/block.svg" alt="block explorer">
-                            </button>
-                        </div>
-                        <div id="tooltip-default" role="tooltip"
-                            class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-gray-900 rounded-lg shadow-sm opacity-0 tooltip dark:bg-gray-700">
-                            Open block explorer
-                            <div class="tooltip-arrow" data-popper-arrow></div>
-                        </div>
+                        <router-link :to="{ name: 'block-explorer' }" target="_blank" class="flex items-center p-2">
+                            <div class="px-1">
+                                <button
+                                    class="bg-[#1E1E1E]  font-semibold text-white py-1 px-4 border border-ffffff hover:border-transparent rounded">
+                                    Block Explorer</button>
+
+                            </div>
+                        </router-link>
                         <div class="px-1">
                             <button type="button" class="flex text-sm  rounded-full" aria-expanded="false"
                                 data-dropdown-toggle="dropdown-user">
