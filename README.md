@@ -11,7 +11,7 @@
 <ul>
   <li><strong>Message Broker:</strong> MQTT for high latency and low bandwidth distributed systems.</li>
   <li><strong>Consensus Algorithm:</strong> Custom Raft Algorithm implementation.</li>
-  <li><strong>Data Management:</strong> Redis for state management.</li>
+  <li><strong>Session Management:</strong> Redis for state management.</li>
   <li><strong>Deployment:</strong> Docker for containerized deployment.</li>
 </ul>
 
@@ -23,6 +23,8 @@
   <li>Each node maintains an independent SQLITE database for transactions.</li>
   <li>Blockchain files undergo verification before being added to the blockchain.</li>
   <li>Each node has a HTTP server on port 8080 with an administrator panel for node management and system control.</li>
+  <li>The leader node exposes an API at port 3500 for communication with the clients.When the leader dies, the new leader exposes its API.</li>
+
 </ul>
 
 <h2>Administrator Panel</h2>
