@@ -34,7 +34,7 @@
 </ul>
 
 <h2>User Access</h2>
-<p>Access and operations within the administrator panel are role-based, restricted to authorized users based on their roles.</p>
+<p>Access and operations within the administrator panel are role-based, restricted to authorized users based on their roles.The default user is admin@superuser.com and the password is 123456</p>
 
 <h2>Additional Details</h2>
 <ul>
