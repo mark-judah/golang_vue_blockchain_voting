@@ -38,7 +38,8 @@
 
 <h2>Additional Details</h2>
 <ul>
-  <li>Blockchain exploration for public viewing.</li>
+  <li>Blockchain explorer for public viewing at http://localhost/block-explorer</li>
+  <li>Each node has its own block explorer,voters access the block explorer on the current leader node</li>
   <li>Voter access to ballots in the blockchain using their transaction IDs received via SMS.</li>
   <li>Docker used for simulating different nodes, running on Alpine Linux containers.</li>
 </ul>
