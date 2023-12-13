@@ -5,7 +5,7 @@
 
 <h1>ChainVote Backend</h1>
 
-<p>The ChainVote backend is a distributed blockchain system designed for the election process. It uses various technologies and methodologies for efficient and secure operations.</p>
+<p>The ChainVote backend is a distributed blockchain system designed for the election process in Kenya.</p>
 
 <h2>Technologies Used</h2>
 <ul>
