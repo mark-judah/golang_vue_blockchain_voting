@@ -1,8 +1,6 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <title>ChainVote Backend Setup</title>
-</head>
+
 <body>
 
 <h1>ChainVote Backend</h1>
@@ -51,8 +49,6 @@
 <h2>Frontend Interaction</h2>
 <p>The frontend client at <a href="https://github.com/mark-judah/chainvote_dapp_client" target="_blank">ChainVote Dapp Client</a> makes requests to this backend for system interactions.</p>
 
-<h2>Support and Contact</h2>
-<p>For any inquiries or support, please reach out to [email@example.com](mailto:email@example.com).</p>
 
 </body>
 </html>
