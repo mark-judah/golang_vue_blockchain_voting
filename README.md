@@ -42,8 +42,7 @@
 <ul>
   <li>Blockchain explorer for public viewing at http://localhost/block-explorer</li>
   <li>Each node has its own block explorer,voters access the block explorer on the current leader node</li>
-  <li>Voter access to ballots in the blockchain using their transaction IDs received via SMS.</li>
-  <li>Docker used for simulating different nodes, running on Alpine Linux containers.</li>
+  <li>Voters can view and verify their ballots in the blockchain using their transaction IDs received via SMS</li>
 </ul>
 
 <h2>Setting Up the Backend</h2>
