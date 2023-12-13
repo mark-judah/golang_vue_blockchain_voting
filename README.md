@@ -66,7 +66,7 @@ sudo apt-get install emqx redis-server
 <p>Update the MQTT broker URL in the <code>mqttController.go</code> file:</p>
 <pre><code>
 // Update MQTT broker URL
-const BrokerURL = "YOUR_MQTT_BROKER_URL"
+opts := mqtt.NewClientOptions().AddBroker("tcp://YOUR_MQTT_BROKER_URL:PORT")
 </code></pre>
 
 <h3>Linux Deployment</h3>
