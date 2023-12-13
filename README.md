@@ -55,11 +55,10 @@ cd ChainVoteBackend
 go mod download
 </code></pre>
 
-<h3>Install EMQX and Redis</h3>
-<p>Install EMQX (MQTT broker) and Redis:</p>
+<h3>Install EMQX</h3>
+<p>Install EMQX (MQTT broker):</p>
 <pre><code>
-# Example for Ubuntu/Debian
-sudo apt-get install emqx redis-server
+sudo apt-get install emqx
 </code></pre>
 
 <h3>Configure MQTT Controller</h3>
