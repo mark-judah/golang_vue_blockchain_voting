@@ -22,7 +22,7 @@
   <li>Transaction pool holds 5 transactions before processing into blocks.</li>
   <li>Each node maintains an independent SQLITE database for transactions.</li>
   <li>Blockchain files undergo verification before being added to the blockchain.</li>
-  <li>HTTP servers with an administrator panel for node management and system control.</li>
+  <li>Each node has a HTTP server on port 8080 with an administrator panel for node management and system control.</li>
 </ul>
 
 <h2>Administrator Panel</h2>
